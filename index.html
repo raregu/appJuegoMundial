@@ -190,6 +190,20 @@ tr:hover td{background:rgba(255,255,255,.02);}
 .pts-winner{background:rgba(34,197,94,.2);color:var(--green);}
 .pts-none{background:rgba(100,120,160,.15);color:var(--txt2);}
 
+/* ===== GROUP PREDICTIONS ===== */
+.group-preds{margin-top:12px;border-top:1px solid var(--border);padding-top:10px;}
+.group-preds-toggle{background:none;border:none;color:var(--txt2);font-size:11px;font-weight:600;
+  cursor:pointer;display:flex;align-items:center;gap:5px;padding:0;text-transform:uppercase;letter-spacing:.5px;}
+.group-preds-toggle:hover{color:var(--txt);}
+.group-preds-body{margin-top:8px;}
+.group-preds-table{width:100%;font-size:12px;border-collapse:collapse;}
+.group-preds-table th{color:var(--txt2);font-size:10px;font-weight:600;text-align:left;
+  padding:3px 6px;text-transform:uppercase;letter-spacing:.4px;}
+.group-preds-table td{padding:5px 6px;border-bottom:1px solid rgba(37,48,85,.5);}
+.group-preds-table tr:last-child td{border-bottom:none;}
+.group-preds-table tr.is-me{background:rgba(255,215,0,.05);}
+.gp-no-pred{color:var(--txt2);font-style:italic;}
+
 /* ===== RESULT INPUT ===== */
 .result-input{width:48px;height:38px;background:var(--dark4);border:1px solid var(--border);
   border-radius:var(--r);color:var(--gold);font-size:17px;font-weight:700;text-align:center;outline:none;}
@@ -1255,6 +1269,65 @@ function renderPlayerMatches() {
 function setPlayerPhase(p) { S.playerPhaseFilter = p; renderPlayerMatches(); }
 function setPlayerGroup(g) { S.playerGroupFilter = g; renderPlayerMatches(); }
 
+function renderGroupPredictions(m, res) {
+  const matchPreds = S.allPredictions.filter(p => p.match_id === m.id);
+  const finished = res?.status === 'finished';
+  const membersActive = S.members.filter(mem => mem.active);
+  if (!membersActive.length) return '';
+
+  const rows = membersActive.map(mem => {
+    const p = matchPreds.find(x => x.user_id === mem.user_id);
+    const isMe = mem.user_id === S.user.id;
+    const name = mem.profiles?.full_name || 'Usuario';
+    const meClass = isMe ? ' is-me' : '';
+
+    if (!p) {
+      return `<tr class="${meClass}">
+        <td>${isMe ? `<strong>${name}</strong>` : name}</td>
+        <td class="gp-no-pred" colspan="2">Sin apuesta</td>
+      </tr>`;
+    }
+
+    let ptsHtml = '';
+    if (finished && res?.result1 !== null && res?.result1 !== undefined) {
+      const r = calcPoints(p.pred1, p.pred2, res.result1, res.result2, m.phase);
+      if (r) {
+        const map = { exact: {icon:'🎯', color:'var(--gold)'}, winner: {icon:'✅', color:'var(--green)'}, miss: {icon:'❌', color:'var(--txt2)'} };
+        const t = map[r.type];
+        ptsHtml = `<span style="color:${t.color};font-weight:700;">${t.icon} ${r.pts > 0 ? '+'+r.pts : r.pts} pts</span>`;
+      }
+    }
+
+    return `<tr class="${meClass}">
+      <td>${isMe ? `<strong>${name} ⭐</strong>` : name}</td>
+      <td style="font-weight:700;color:var(--gold);">${p.pred1} − ${p.pred2}</td>
+      <td>${ptsHtml}</td>
+    </tr>`;
+  });
+
+  const uid = 'gp-' + m.id;
+  return `
+    <div class="group-preds">
+      <button class="group-preds-toggle" onclick="toggleGroupPreds('${uid}')">
+        <span id="${uid}-icon">▶</span> 👥 Ver apuestas del grupo (${matchPreds.length}/${membersActive.length})
+      </button>
+      <div class="group-preds-body hidden" id="${uid}">
+        <table class="group-preds-table">
+          <thead><tr><th>Jugador</th><th>Apuesta</th><th>${finished ? 'Puntos' : ''}</th></tr></thead>
+          <tbody>${rows.join('')}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+function toggleGroupPreds(uid) {
+  const body = document.getElementById(uid);
+  const icon = document.getElementById(uid + '-icon');
+  if (!body) return;
+  const hidden = body.classList.toggle('hidden');
+  if (icon) icon.textContent = hidden ? '▶' : '▼';
+}
+
 function renderPlayerMatchCard(m) {
   const res = S.results[m.id];
   const pred = S.predictions[m.id];
@@ -1279,11 +1352,12 @@ function renderPlayerMatchCard(m) {
       ptsHtml = `<span class="pts-chip pts-none">Sin pronóstico</span>`;
     }
     const predScore = pred ? `<span style="font-size:12px;color:var(--txt2);">Tu pronóstico: <strong style="color:var(--gold)">${pred.pred1}-${pred.pred2}</strong></span>` : '';
-    predHtml = `<div class="pred-actions">${predScore}${ptsHtml}</div>`;
+    predHtml = `<div class="pred-actions">${predScore}${ptsHtml}</div>${renderGroupPredictions(m, res)}`;
   } else if (locked) {
-    predHtml = pred ?
+    const myPredHtml = pred ?
       `<div class="pred-actions"><span style="font-size:12px;color:var(--txt2);">🔒 Cerrado · Tu pronóstico: <strong style="color:var(--gold)">${pred.pred1}-${pred.pred2}</strong></span></div>` :
       `<div class="pred-actions"><span style="font-size:12px;color:var(--red);">🔒 Cerrado · Sin pronóstico guardado</span></div>`;
+    predHtml = myPredHtml + renderGroupPredictions(m, res);
   } else {
     const v = S.predVals[m.id] || { v1: pred?.pred1 ?? 0, v2: pred?.pred2 ?? 0 };
     if (!S.predVals[m.id]) S.predVals[m.id] = { v1: v.v1, v2: v.v2 };
@@ -1306,7 +1380,8 @@ function renderPlayerMatchCard(m) {
       <div class="pred-actions">
         <button class="btn btn-gold btn-sm" onclick="savePrediction('${m.id}')">💾 Guardar</button>
         ${pred ? `<span class="pred-status saved">✓ Guardado (${pred.pred1}-${pred.pred2})</span>` : `<span class="pred-status pending">Sin guardar</span>`}
-      </div>`;
+      </div>
+      ${renderGroupPredictions(m, res)}`;
   }
 
   const hasPred = !!pred && !finished;
