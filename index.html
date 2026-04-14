@@ -538,10 +538,11 @@ const PHASE_MULT = {groups:1,r16:2,qf:3,sf:4,third:5,final:5};
 
 /* Planes de pago */
 const PLAN_CONFIG = {
-  free:       { label:'Gratis',     max:10,  price:0,  priceStr:'Gratis',  color:'var(--green)',  icon:'🎁' },
-  starter:    { label:'Starter',    max:50,  price:5,  priceStr:'USD $5',  color:'#60a5fa',       icon:'⭐' },
-  pro:        { label:'Pro',        max:100, price:10, priceStr:'USD $10', color:'#c084fc',       icon:'🚀' },
-  enterprise: { label:'Enterprise', max:999, price:30, priceStr:'USD $30', color:'var(--gold)',   icon:'👑' },
+  free:       { label:'Gratis',     max:10,   price:0,   priceStr:'Gratis',   color:'var(--green)', icon:'🎁' },
+  starter:    { label:'Starter',    max:50,   price:19,  priceStr:'USD $19',  color:'#60a5fa',      icon:'⭐' },
+  pro:        { label:'Pro',        max:100,  price:39,  priceStr:'USD $39',  color:'#c084fc',      icon:'🚀' },
+  business:   { label:'Business',   max:500,  price:149, priceStr:'USD $149', color:'var(--orange)',icon:'🏢' },
+  enterprise: { label:'Enterprise', max:9999, price:299, priceStr:'USD $299', color:'var(--gold)',  icon:'👑' },
 };
 const SUPABASE_FN_URL = 'https://eknrnhhguoxkjckckcli.supabase.co/functions/v1';
 
@@ -622,7 +623,12 @@ async function doLogin() {
   const { data, error } = await sb.auth.signInWithPassword({ email, password });
   setLoading('loginBtn', false);
   if (error) {
-    showAuthAlert('loginAlert', error.message === 'Invalid login credentials' ? 'Correo o contraseña incorrectos' : error.message);
+    const msg = error.message === 'Invalid login credentials'
+      ? 'Correo o contraseña incorrectos'
+      : error.message.toLowerCase().includes('email not confirmed')
+      ? '📧 Debés confirmar tu correo antes de iniciar sesión. Revisá tu bandeja de entrada.'
+      : error.message;
+    showAuthAlert('loginAlert', msg);
     return;
   }
   // Forzar sesión en el cliente antes de cualquier llamada API
@@ -654,18 +660,41 @@ async function doRegister() {
     return;
   }
 
-  const user = data?.user || data?.session?.user;
-  if (!user) {
-    showAuthAlert('registerAlert', '✅ Revisa tu correo y confirma tu cuenta para continuar.');
+  const user = data?.user;
+
+  // Sin sesión = Supabase envió email de confirmación (confirmación activada)
+  if (!data.session) {
+    // Guardar nombre para cuando confirme y vuelva a la app
+    if (user) {
+      await sb.from('profiles')
+        .upsert({ id: user.id, full_name: name, email: user.email }, { onConflict: 'id' });
+    }
+    // Mostrar pantalla de "revisá tu correo"
+    document.getElementById('formRegister').innerHTML = `
+      <div style="text-align:center;padding:10px 0;">
+        <div style="font-size:52px;margin-bottom:14px;">📧</div>
+        <h3 style="color:var(--gold);font-size:17px;font-weight:800;margin-bottom:8px;">¡Revisá tu correo!</h3>
+        <p style="font-size:13px;color:var(--txt2);line-height:1.6;">
+          Te enviamos un link de confirmación a<br>
+          <strong style="color:var(--txt);">${email}</strong>
+        </p>
+        <p style="font-size:12px;color:var(--txt2);margin-top:10px;">
+          Hacé clic en el link del correo para activar tu cuenta.<br>
+          Luego volvé aquí e iniciá sesión.
+        </p>
+        <button class="btn btn-gold btn-full" style="margin-top:18px;" onclick="switchAuthTab('login')">
+          Ya confirmé mi correo → Iniciar Sesión
+        </button>
+        <p style="font-size:11px;color:var(--txt2);margin-top:10px;">
+          ¿No recibiste el correo? Revisá la carpeta de spam.
+        </p>
+      </div>`;
     return;
   }
 
-  // Forzar sesión en el cliente ANTES de cualquier llamada API
-  if (data.session) {
-    await sb.auth.setSession({ access_token: data.session.access_token, refresh_token: data.session.refresh_token });
-  }
+  // Con sesión = confirmación desactivada, entrar directo
+  await sb.auth.setSession({ access_token: data.session.access_token, refresh_token: data.session.refresh_token });
 
-  // 2. Crear perfil (el trigger puede haber fallado, lo hacemos manualmente también)
   const { error: profErr } = await sb.from('profiles')
     .upsert({ id: user.id, full_name: name, email: user.email }, { onConflict: 'id' });
   if (profErr) console.warn('Profile upsert warning:', profErr.message);
@@ -1733,15 +1762,17 @@ function openUpgradeModal() {
     .filter(([key]) => key !== 'free')
     .map(([key, cfg]) => {
       const isCurrent = key === currentPlan;
-      const isDisabled = isCurrent;
+      const isDowngrade = Object.keys(PLAN_CONFIG).indexOf(key) < Object.keys(PLAN_CONFIG).indexOf(currentPlan);
       return `
-      <div class="plan-card${key === 'starter' ? ' recommended' : ''}" style="opacity:${isDisabled?'.5':'1'};">
+      <div class="plan-card${key === 'pro' ? ' recommended' : ''}" style="opacity:${isCurrent||isDowngrade?'.5':'1'};">
         <div class="plan-card-name">${cfg.icon} ${cfg.label}</div>
-        <div class="plan-card-price">${cfg.priceStr.replace('USD ','')} <span>USD · pago único</span></div>
-        <div class="plan-card-limit">Hasta ${cfg.max === 999 ? 'ilimitados' : cfg.max} jugadores</div>
-        <div class="plan-card-currency" style="margin-bottom:8px;">💳 Se cobra en tu moneda local vía MercadoPago</div>
+        <div class="plan-card-price">${cfg.priceStr.replace('USD ','')} <span>USD · único</span></div>
+        <div class="plan-card-limit">Hasta ${cfg.max >= 9999 ? 'ilimitados' : cfg.max} jugadores</div>
+        <div class="plan-card-currency" style="margin-bottom:8px;">💳 En tu moneda local vía MercadoPago</div>
         ${isCurrent
           ? `<button class="btn btn-ghost btn-sm btn-full" disabled>✓ Plan actual</button>`
+          : isDowngrade
+          ? `<button class="btn btn-ghost btn-sm btn-full" disabled>Plan inferior</button>`
           : `<button class="btn btn-gold btn-sm btn-full" onclick="startPayment('${key}')">Pagar con MercadoPago</button>`}
       </div>`;
     }).join('');
