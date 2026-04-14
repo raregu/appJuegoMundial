@@ -626,7 +626,7 @@ async function doLogin() {
     const msg = error.message === 'Invalid login credentials'
       ? 'Correo o contraseña incorrectos'
       : error.message.toLowerCase().includes('email not confirmed')
-      ? '📧 Debés confirmar tu correo antes de iniciar sesión. Revisá tu bandeja de entrada.'
+      ? '📧 Debes confirmar tu correo antes de iniciar sesión. Revisa tu bandeja de entrada.'
       : error.message;
     showAuthAlert('loginAlert', msg);
     return;
@@ -667,20 +667,20 @@ async function doRegister() {
     document.getElementById('formRegister').innerHTML = `
       <div style="text-align:center;padding:10px 0;">
         <div style="font-size:52px;margin-bottom:14px;">📧</div>
-        <h3 style="color:var(--gold);font-size:17px;font-weight:800;margin-bottom:8px;">¡Revisá tu correo!</h3>
+        <h3 style="color:var(--gold);font-size:17px;font-weight:800;margin-bottom:8px;">¡Revisa tu correo!</h3>
         <p style="font-size:13px;color:var(--txt2);line-height:1.6;">
           Te enviamos un link de confirmación a<br>
           <strong style="color:var(--txt);">${email}</strong>
         </p>
         <p style="font-size:12px;color:var(--txt2);margin-top:10px;">
-          Hacé clic en el link del correo para activar tu cuenta.<br>
-          Luego volvé aquí e iniciá sesión.
+          Haz clic en el link del correo para activar tu cuenta.<br>
+          Luego vuelve aquí e inicia sesión.
         </p>
         <button class="btn btn-gold btn-full" style="margin-top:18px;" onclick="switchAuthTab('login')">
           Ya confirmé mi correo → Iniciar Sesión
         </button>
         <p style="font-size:11px;color:var(--txt2);margin-top:10px;">
-          ¿No recibiste el correo? Revisá la carpeta de spam.
+          ¿No recibiste el correo? Revisa la carpeta de spam.
         </p>
       </div>`;
     return;
@@ -842,7 +842,7 @@ async function createGame() {
   const { data: sessionData, error: sessErr } = await sb.auth.getSession();
   if (sessErr || !sessionData?.session) {
     document.getElementById('createAlert').className='alert alert-error';
-    document.getElementById('createAlert').textContent='Sesión expirada. Por favor volvé a iniciar sesión.';
+    document.getElementById('createAlert').textContent='Sesión expirada. Por favor vuelve a iniciar sesión.';
     setLoading('createGameBtn', false);
     return;
   }
@@ -1872,7 +1872,7 @@ async function processPendingPayment() {
     await enterGame(gameId);
 
   } else if (payment === 'failure') {
-    showToast('❌ El pago no se completó. Podés intentarlo de nuevo desde el panel.', 'error');
+    showToast('❌ El pago no se completó. Puedes intentarlo de nuevo desde el panel.', 'error');
   } else if (payment === 'pending') {
     showToast('⏳ Pago pendiente de confirmación. El plan se activará cuando se apruebe.', 'info');
   }
