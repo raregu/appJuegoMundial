@@ -315,7 +315,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
   <div class="auth-box">
     <div class="auth-logo">
       <span class="trophy">🏆</span>
-      <h1>PRODE MUNDIAL 2026</h1>
+      <h1>APP MUNDIAL 2026</h1>
       <p>Adivina los resultados · Gana puntos · Compite en equipo</p>
     </div>
     <div class="auth-tabs">
@@ -736,7 +736,7 @@ function openCreateGameModal() {
   document.getElementById('modalBody').innerHTML = `
     <div id="createAlert"></div>
     <div class="form-group"><label>Nombre del Juego *</label><input id="cgName" placeholder="ej: Mundial ACME 2026"></div>
-    <div class="form-group"><label>Descripción (opcional)</label><input id="cgDesc" placeholder="ej: Prode de la empresa"></div>
+    <div class="form-group"><label>Descripción (opcional)</label><input id="cgDesc" placeholder="ej: Quiniela de la empresa"></div>
     <div class="form-group">
       <label>Logo de la empresa (opcional)</label>
       <input id="cgLogo" type="url" placeholder="https://tuempresa.com/logo.png" oninput="previewLogo()">
@@ -1569,4 +1569,101 @@ function renderLeaderboard(containerId) {
     <div style="margin-top:10px;padding:10px 12px;background:var(--dark3);border-radius:var(--r);font-size:11px;color:var(--txt2);">
       <strong style="color:var(--txt);">Puntos:</strong>
       🎯 Exacto: <strong style="color:var(--gold)">×3</strong> ·
-      ✅ Ganador/Empate: <strong style="color:var(--gre
+      ✅ Ganador/Empate: <strong style="color:var(--green)">×1</strong> ·
+      Multiplicadores por fase: Grupos×1, Octavos×2, Cuartos×3, Semis×4, Final/3°×5
+    </div>
+  `;
+}
+
+/* ============================================================
+   HELPER FUNCTIONS
+============================================================ */
+function getTeamName(m, side) {
+  return m[side] || 'TBD';
+}
+
+function getFlag(name) {
+  return FLAGS[name] || '🏳️';
+}
+
+function fmtDate(d, short) {
+  if (!d) return '';
+  const dt = new Date(d);
+  if (isNaN(dt)) return d;
+  if (short) {
+    return dt.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+  }
+  return dt.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function statusBadge(status) {
+  if (status === 'finished') return `<span class="badge badge-green">Finalizado</span>`;
+  if (status === 'live') return `<span class="badge badge-red">EN VIVO</span>`;
+  return `<span class="badge badge-gray">Pendiente</span>`;
+}
+
+/* ============================================================
+   UI UTILITIES
+============================================================ */
+function showToast(msg, type) {
+  const container = document.getElementById('toastContainer');
+  const el = document.createElement('div');
+  el.className = 'toast-item';
+  const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
+  el.innerHTML = `<span>${icon}</span><span>${msg}</span>`;
+  container.appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; setTimeout(() => el.remove(), 300); }, 3200);
+}
+
+function setLoading(id, loading) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.disabled = loading;
+  if (loading) {
+    el.dataset.origText = el.innerHTML;
+    el.innerHTML = `<span class="spinner" style="width:14px;height:14px;border-width:2px;"></span> Cargando...`;
+  } else {
+    if (el.dataset.origText) el.innerHTML = el.dataset.origText;
+  }
+}
+
+function openModal() {
+  document.getElementById('modalOverlay').classList.remove('hidden');
+}
+
+function closeModal(e) {
+  if (e && e.target !== document.getElementById('modalOverlay')) return;
+  document.getElementById('modalOverlay').classList.add('hidden');
+  document.getElementById('modalBody').innerHTML = '';
+}
+
+function showScreen(id) {
+  ['authScreen', 'gamesScreen', 'appScreen'].forEach(s => {
+    document.getElementById(s).classList.toggle('hidden', s !== id + 'Screen');
+  });
+}
+
+/* ============================================================
+   INIT
+============================================================ */
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session?.user) {
+    await onLogin(session.user);
+  }
+  // Auth state listener
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN' && session?.user && !S.user) {
+      await onLogin(session.user);
+    }
+    if (event === 'SIGNED_OUT') {
+      S = { ...S, user: null, profile: null, game: null, member: null,
+            matches: [], results: {}, predictions: {}, allPredictions: [], members: [],
+            predVals: {}, currentPage: null };
+      showScreen('auth');
+    }
+  });
+})();
+</script>
+</body>
+</html>

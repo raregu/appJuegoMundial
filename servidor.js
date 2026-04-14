@@ -1,4 +1,4 @@
-// Servidor local simple para Prode Mundial 2026
+// Servidor local simple para App Mundial 2026
 // Ejecutar con: node servidor.js
 // Luego abrir: http://localhost:3000
 
@@ -56,7 +56,7 @@ const server = http.createServer((req, res) => {
 
 server.listen(PORT, () => {
   console.log('');
-  console.log('  🏆 Prode Mundial 2026 - Servidor local');
+  console.log('  🏆 App Mundial 2026 - Servidor local');
   console.log('  ─────────────────────────────────────');
   console.log(`  ✅ Corriendo en: http://localhost:${PORT}`);
   console.log('  📋 Copia esa URL y ábrela en tu navegador');
