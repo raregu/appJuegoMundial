@@ -1776,7 +1776,7 @@ async function startPayment(plan) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${(await sb.auth.getSession()).data.session?.access_token}`
+        'Authorization': `Bearer ${SUPABASE_ANON}`
       },
       body: JSON.stringify({
         game_id: S.game.id,
