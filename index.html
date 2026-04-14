@@ -647,7 +647,7 @@ async function doRegister() {
   setLoading('registerBtn', true);
 
   // 1. Crear cuenta en Supabase Auth
-  const { data, error } = await sb.auth.signUp({ email, password });
+  const { data, error } = await sb.auth.signUp({ email, password, options: { data: { full_name: name } } });
   setLoading('registerBtn', false);
 
   if (error) {
