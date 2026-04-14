@@ -20,7 +20,7 @@ const MIME = {
 const server = http.createServer((req, res) => {
   // Servir index por defecto
   let filePath = '.' + req.url;
-  if (filePath === './' || filePath === '.') filePath = './prode-mundial-2026.html';
+  if (filePath === './' || filePath === '.') filePath = './index.html';
 
   const ext = path.extname(filePath);
   const contentType = MIME[ext] || 'text/plain';
@@ -29,7 +29,7 @@ const server = http.createServer((req, res) => {
     if (err) {
       if (err.code === 'ENOENT') {
         // Si pide cualquier ruta, devolver el HTML principal (SPA)
-        fs.readFile('./prode-mundial-2026.html', (e, c) => {
+        fs.readFile('./index.html', (e, c) => {
           res.writeHead(200, {
             'Content-Type': 'text/html; charset=utf-8',
             'Cache-Control': 'no-cache, no-store, must-revalidate',

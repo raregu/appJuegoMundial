@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🏆 Prode Mundial 2026</title>
+<title>🏆 App Mundial 2026</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 :root{
@@ -190,6 +190,20 @@ tr:hover td{background:rgba(255,255,255,.02);}
 .pts-winner{background:rgba(34,197,94,.2);color:var(--green);}
 .pts-none{background:rgba(100,120,160,.15);color:var(--txt2);}
 
+/* ===== GROUP PREDICTIONS ===== */
+.group-preds{margin-top:12px;border-top:1px solid var(--border);padding-top:10px;}
+.group-preds-toggle{background:none;border:none;color:var(--txt2);font-size:11px;font-weight:600;
+  cursor:pointer;display:flex;align-items:center;gap:5px;padding:0;text-transform:uppercase;letter-spacing:.5px;}
+.group-preds-toggle:hover{color:var(--txt);}
+.group-preds-body{margin-top:8px;}
+.group-preds-table{width:100%;font-size:12px;border-collapse:collapse;}
+.group-preds-table th{color:var(--txt2);font-size:10px;font-weight:600;text-align:left;
+  padding:3px 6px;text-transform:uppercase;letter-spacing:.4px;}
+.group-preds-table td{padding:5px 6px;border-bottom:1px solid rgba(37,48,85,.5);}
+.group-preds-table tr:last-child td{border-bottom:none;}
+.group-preds-table tr.is-me{background:rgba(255,215,0,.05);}
+.gp-no-pred{color:var(--txt2);font-style:italic;}
+
 /* ===== RESULT INPUT ===== */
 .result-input{width:48px;height:38px;background:var(--dark4);border:1px solid var(--border);
   border-radius:var(--r);color:var(--gold);font-size:17px;font-weight:700;text-align:center;outline:none;}
@@ -330,7 +344,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
 <!-- ===== GAMES LIST ===== -->
 <div id="gamesScreen" class="hidden">
   <div class="games-header">
-    <div class="games-logo"><span>🏆</span> Prode Mundial 2026</div>
+    <div class="games-logo"><span>🏆</span> App Mundial 2026</div>
     <div style="display:flex;align-items:center;gap:10px;">
       <span id="gamesUserName" style="font-size:13px;color:var(--txt2);"></span>
       <button class="btn btn-ghost btn-sm" onclick="doSignOut()">Salir</button>
@@ -339,7 +353,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
   <div class="games-content">
     <div class="welcome-banner">
       <span class="trophy2">⚽</span>
-      <h2>Bienvenido al Prode Mundial 2026</h2>
+      <h2>Bienvenido al App Mundial 2026</h2>
       <p>Selecciona un juego o crea uno nuevo para tu empresa o grupo</p>
     </div>
     <div id="gamesLoading" class="loading"><div class="spinner"></div><span style="color:var(--txt2);font-size:13px;">Cargando juegos...</span></div>
@@ -360,7 +374,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
 <div id="appScreen" class="hidden">
   <header class="app-header">
     <div class="app-header-left">
-      <div class="app-logo" onclick="goToGamesList()"><span>🏆</span></div>
+      <div class="app-logo" onclick="goToGamesList()"><span id="appLogoArea">🏆</span></div>
       <div class="app-game-name" id="appGameName"></div>
     </div>
     <div class="app-header-right">
@@ -425,7 +439,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
 
     <!-- PLAYER PREDICT -->
     <div id="pg-player-predict" class="page hidden">
-      <div class="page-header"><h2>⚽ Mis Pronósticos</h2><p>Ingresa tu predicción antes de que empiece cada partido</p></div>
+      <div class="page-header"><h2>⚽ Mis Pronósticos</h2><p>Las predicciones se bloquean 1 hora antes del inicio de cada partido</p></div>
       <div class="filters-row" id="playerPhaseFilters"></div>
       <div class="group-tabs-wrap" id="playerGroupTabsWrap"><div class="group-tabs" id="playerGroupTabs"></div></div>
       <div class="matches-grid" id="playerMatchesList"></div>
@@ -682,9 +696,11 @@ async function loadGames() {
     const roleLabel = m.role === 'admin' ? '<span class="badge badge-red">Admin</span>' : '<span class="badge badge-blue">Jugador</span>';
     return `
     <div class="game-card" onclick="enterGame('${g.id}')">
-      <span class="game-card-icon">⚽</span>
+      ${g.logo_url
+        ? `<img src="${g.logo_url}" style="height:48px;max-width:140px;object-fit:contain;margin-bottom:10px;display:block;border-radius:4px;" onerror="this.style.display='none'">`
+        : `<span class="game-card-icon">⚽</span>`}
       <div class="game-card-name">${g.name}</div>
-      <div class="game-card-desc">${g.description || 'Prode Mundial 2026'}</div>
+      <div class="game-card-desc">${g.description || 'App Mundial 2026'}</div>
       <div class="game-card-meta">
         ${roleLabel}
         <span class="badge badge-gray">🔑 ${g.invite_code}</span>
@@ -721,6 +737,15 @@ function openCreateGameModal() {
     <div id="createAlert"></div>
     <div class="form-group"><label>Nombre del Juego *</label><input id="cgName" placeholder="ej: Mundial ACME 2026"></div>
     <div class="form-group"><label>Descripción (opcional)</label><input id="cgDesc" placeholder="ej: Prode de la empresa"></div>
+    <div class="form-group">
+      <label>Logo de la empresa (opcional)</label>
+      <input id="cgLogo" type="url" placeholder="https://tuempresa.com/logo.png" oninput="previewLogo()">
+      <div id="cgLogoPreview" style="margin-top:8px;min-height:0;display:none;align-items:center;gap:10px;">
+        <img id="cgLogoImg" style="max-height:56px;max-width:160px;border-radius:6px;border:1px solid var(--border);padding:4px;background:white;" onerror="this.parentNode.style.display='none'"/>
+        <span style="font-size:11px;color:var(--green);">✓ Logo válido</span>
+      </div>
+      <p style="font-size:11px;color:var(--txt2);margin-top:4px;">Pegá la URL de la imagen. Tip: en Google, buscá el logo, click derecho → "Copiar dirección de imagen".</p>
+    </div>
     <div class="alert alert-info">Serás el administrador del juego. Se generará un código de invitación automáticamente.</div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
@@ -730,18 +755,57 @@ function openCreateGameModal() {
   openModal();
 }
 
+function previewLogo() {
+  const url = document.getElementById('cgLogo').value.trim();
+  const preview = document.getElementById('cgLogoPreview');
+  const img = document.getElementById('cgLogoImg');
+  if (url) {
+    img.src = url;
+    preview.style.display = 'flex';
+  } else {
+    preview.style.display = 'none';
+  }
+}
+
 async function createGame() {
   const name = document.getElementById('cgName').value.trim();
   const desc = document.getElementById('cgDesc').value.trim();
+  const logoUrl = document.getElementById('cgLogo')?.value.trim() || '';
   if (!name) { document.getElementById('createAlert').className='alert alert-error'; document.getElementById('createAlert').textContent='El nombre es requerido'; return; }
   setLoading('createGameBtn', true);
-  // Create game
+
+  // Refrescar sesión y asegurarse que el token es válido antes de insertar
+  const { data: sessionData, error: sessErr } = await sb.auth.getSession();
+  if (sessErr || !sessionData?.session) {
+    document.getElementById('createAlert').className='alert alert-error';
+    document.getElementById('createAlert').textContent='Sesión expirada. Por favor volvé a iniciar sesión.';
+    setLoading('createGameBtn', false);
+    return;
+  }
+  // Forzar que el cliente use el token más reciente
+  await sb.auth.setSession({
+    access_token: sessionData.session.access_token,
+    refresh_token: sessionData.session.refresh_token
+  });
+
+  // Create game — el trigger del servidor pone created_by = auth.uid()
+  // pero también lo enviamos por si acaso no está instalado el trigger
   const { data: game, error } = await sb.from('games')
-    .insert({ name, description: desc, created_by: S.user.id })
+    .insert({ name, description: desc, created_by: sessionData.session.user.id, logo_url: logoUrl || null })
     .select().single();
-  if (error || !game) { document.getElementById('createAlert').className='alert alert-error'; document.getElementById('createAlert').textContent='Error al crear juego: '+(error?.message||''); setLoading('createGameBtn',false); return; }
+  if (error || !game) {
+    document.getElementById('createAlert').className='alert alert-error';
+    document.getElementById('createAlert').textContent='Error al crear juego: '+(error?.message||'Error desconocido');
+    setLoading('createGameBtn', false);
+    return;
+  }
   // Add creator as admin member
-  await sb.from('game_members').insert({ game_id: game.id, user_id: S.user.id, role: 'admin' });
+  const { error: memErr } = await sb.from('game_members')
+    .insert({ game_id: game.id, user_id: sessionData.session.user.id, role: 'admin' });
+  if (memErr) {
+    // Si ya existe no es un error crítico
+    console.warn('game_members insert:', memErr.message);
+  }
   setLoading('createGameBtn', false);
   closeModal();
   showToast('¡Juego creado! Código: ' + game.invite_code, 'success');
@@ -815,6 +879,12 @@ async function loadGameData() {
   S.members = members || [];
   // Set app header
   document.getElementById('appGameName').textContent = S.game.name;
+  const logoArea = document.getElementById('appLogoArea');
+  if (S.game.logo_url) {
+    logoArea.innerHTML = `<img src="${S.game.logo_url}" style="height:36px;max-width:120px;object-fit:contain;display:block;border-radius:4px;" onerror="this.parentNode.innerHTML='🏆'">`;
+  } else {
+    logoArea.innerHTML = '🏆';
+  }
   const n = S.member.role === 'admin' ? 'Admin' : 'Jugador';
   document.getElementById('userName').textContent = S.profile.full_name;
   document.getElementById('userRole').textContent = n;
@@ -863,6 +933,8 @@ function setupNav(role) {
     {id:'admin-home',icon:'🏠',label:'Inicio'},
     {id:'admin-users',icon:'👥',label:'Jugadores'},
     {id:'admin-matches',icon:'📅',label:'Partidos'},
+    {id:'player-predict',icon:'⚽',label:'Mis Pronósticos'},
+    {id:'player-history',icon:'📊',label:'Mi Historial'},
     {id:'admin-leaderboard',icon:'🏅',label:'Tabla'}
   ] : [
     {id:'player-predict',icon:'⚽',label:'Pronósticos'},
@@ -1227,6 +1299,65 @@ function renderPlayerMatches() {
 function setPlayerPhase(p) { S.playerPhaseFilter = p; renderPlayerMatches(); }
 function setPlayerGroup(g) { S.playerGroupFilter = g; renderPlayerMatches(); }
 
+function renderGroupPredictions(m, res) {
+  const matchPreds = S.allPredictions.filter(p => p.match_id === m.id);
+  const finished = res?.status === 'finished';
+  const membersActive = S.members.filter(mem => mem.active);
+  if (!membersActive.length) return '';
+
+  const rows = membersActive.map(mem => {
+    const p = matchPreds.find(x => x.user_id === mem.user_id);
+    const isMe = mem.user_id === S.user.id;
+    const name = mem.profiles?.full_name || 'Usuario';
+    const meClass = isMe ? ' is-me' : '';
+
+    if (!p) {
+      return `<tr class="${meClass}">
+        <td>${isMe ? `<strong>${name}</strong>` : name}</td>
+        <td class="gp-no-pred" colspan="2">Sin apuesta</td>
+      </tr>`;
+    }
+
+    let ptsHtml = '';
+    if (finished && res?.result1 !== null && res?.result1 !== undefined) {
+      const r = calcPoints(p.pred1, p.pred2, res.result1, res.result2, m.phase);
+      if (r) {
+        const map = { exact: {icon:'🎯', color:'var(--gold)'}, winner: {icon:'✅', color:'var(--green)'}, miss: {icon:'❌', color:'var(--txt2)'} };
+        const t = map[r.type];
+        ptsHtml = `<span style="color:${t.color};font-weight:700;">${t.icon} ${r.pts > 0 ? '+'+r.pts : r.pts} pts</span>`;
+      }
+    }
+
+    return `<tr class="${meClass}">
+      <td>${isMe ? `<strong>${name} ⭐</strong>` : name}</td>
+      <td style="font-weight:700;color:var(--gold);">${p.pred1} − ${p.pred2}</td>
+      <td>${ptsHtml}</td>
+    </tr>`;
+  });
+
+  const uid = 'gp-' + m.id;
+  return `
+    <div class="group-preds">
+      <button class="group-preds-toggle" onclick="toggleGroupPreds('${uid}')">
+        <span id="${uid}-icon">▶</span> 👥 Ver apuestas del grupo (${matchPreds.length}/${membersActive.length})
+      </button>
+      <div class="group-preds-body hidden" id="${uid}">
+        <table class="group-preds-table">
+          <thead><tr><th>Jugador</th><th>Apuesta</th><th>${finished ? 'Puntos' : ''}</th></tr></thead>
+          <tbody>${rows.join('')}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+function toggleGroupPreds(uid) {
+  const body = document.getElementById(uid);
+  const icon = document.getElementById(uid + '-icon');
+  if (!body) return;
+  const hidden = body.classList.toggle('hidden');
+  if (icon) icon.textContent = hidden ? '▶' : '▼';
+}
+
 function renderPlayerMatchCard(m) {
   const res = S.results[m.id];
   const pred = S.predictions[m.id];
@@ -1251,13 +1382,14 @@ function renderPlayerMatchCard(m) {
       ptsHtml = `<span class="pts-chip pts-none">Sin pronóstico</span>`;
     }
     const predScore = pred ? `<span style="font-size:12px;color:var(--txt2);">Tu pronóstico: <strong style="color:var(--gold)">${pred.pred1}-${pred.pred2}</strong></span>` : '';
-    predHtml = `<div class="pred-actions">${predScore}${ptsHtml}</div>`;
+    predHtml = `<div class="pred-actions">${predScore}${ptsHtml}</div>${renderGroupPredictions(m, res)}`;
   } else if (locked) {
-    predHtml = pred ?
+    const myPredHtml = pred ?
       `<div class="pred-actions"><span style="font-size:12px;color:var(--txt2);">🔒 Cerrado · Tu pronóstico: <strong style="color:var(--gold)">${pred.pred1}-${pred.pred2}</strong></span></div>` :
       `<div class="pred-actions"><span style="font-size:12px;color:var(--red);">🔒 Cerrado · Sin pronóstico guardado</span></div>`;
+    predHtml = myPredHtml + renderGroupPredictions(m, res);
   } else {
-    const v = S.predVals[m.id] || { v1: pred?.pred1 ?? 1, v2: pred?.pred2 ?? 0 };
+    const v = S.predVals[m.id] || { v1: pred?.pred1 ?? 0, v2: pred?.pred2 ?? 0 };
     if (!S.predVals[m.id]) S.predVals[m.id] = { v1: v.v1, v2: v.v2 };
     predHtml = `
       <div class="pred-row">
@@ -1278,7 +1410,8 @@ function renderPlayerMatchCard(m) {
       <div class="pred-actions">
         <button class="btn btn-gold btn-sm" onclick="savePrediction('${m.id}')">💾 Guardar</button>
         ${pred ? `<span class="pred-status saved">✓ Guardado (${pred.pred1}-${pred.pred2})</span>` : `<span class="pred-status pending">Sin guardar</span>`}
-      </div>`;
+      </div>
+      ${renderGroupPredictions(m, res)}`;
   }
 
   const hasPred = !!pred && !finished;
@@ -1303,7 +1436,7 @@ function renderPlayerMatchCard(m) {
 }
 
 function stepPred(matchId, team, delta) {
-  if (!S.predVals[matchId]) S.predVals[matchId] = { v1: 1, v2: 0 };
+  if (!S.predVals[matchId]) S.predVals[matchId] = { v1: 0, v2: 0 };
   const key = team === 1 ? 'v1' : 'v2';
   S.predVals[matchId][key] = Math.max(0, Math.min(30, (S.predVals[matchId][key] || 0) + delta));
   const el = document.getElementById((team === 1 ? 'pv1-' : 'pv2-') + matchId);
@@ -1313,7 +1446,7 @@ function stepPred(matchId, team, delta) {
 async function savePrediction(matchId) {
   const m = S.matches.find(x => x.id === matchId);
   if (!m || isLocked(m)) { showToast('El partido ya está cerrado', 'error'); return; }
-  const vals = S.predVals[matchId] || { v1: 1, v2: 0 };
+  const vals = S.predVals[matchId] || { v1: 0, v2: 0 };
   const p1 = vals.v1, p2 = vals.v2;
 
   const existing = S.predictions[matchId];
@@ -1340,7 +1473,9 @@ async function savePrediction(matchId) {
 
 function isLocked(m) {
   if (S.results[m.id]?.status === 'finished') return true;
-  return new Date() >= new Date(m.scheduled_date);
+  // Se bloquea 1 hora antes del inicio del partido
+  const kickoff = new Date(m.scheduled_date).getTime();
+  return Date.now() >= kickoff - 60 * 60 * 1000;
 }
 
 /* ============================================================
@@ -1434,86 +1569,4 @@ function renderLeaderboard(containerId) {
     <div style="margin-top:10px;padding:10px 12px;background:var(--dark3);border-radius:var(--r);font-size:11px;color:var(--txt2);">
       <strong style="color:var(--txt);">Puntos:</strong>
       🎯 Exacto: <strong style="color:var(--gold)">×3</strong> ·
-      ✅ Ganador/Empate: <strong style="color:var(--green)">×1</strong> ·
-      Multiplicadores: ×2 Octavos · ×3 Cuartos · ×4 Semis · ×5 Final
-    </div>`;
-}
-
-/* ============================================================
-   HELPERS
-============================================================ */
-function getFlag(team) { return FLAGS[team] || '🏳️'; }
-function getTeamName(m, side) {
-  const res = S.results[m.id];
-  if (side === 'team1') return res?.team1_name || m.team1;
-  return res?.team2_name || m.team2;
-}
-function statusBadge(st) {
-  if (st === 'finished') return '<span class="badge badge-green">Finalizado</span>';
-  return '<span class="badge badge-gray">Próximo</span>';
-}
-function fmtDate(iso, short=false) {
-  if (!iso) return '';
-  const d = new Date(iso);
-  if (isNaN(d)) return iso;
-  if (short) return d.toLocaleDateString('es-MX', { month: 'short', day: 'numeric' });
-  return d.toLocaleDateString('es-MX', { weekday:'short', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
-}
-function setLoading(btnId, loading) {
-  const btn = document.getElementById(btnId);
-  if (!btn) return;
-  btn.disabled = loading;
-  if (loading) { btn._origText = btn.innerHTML; btn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2px;"></span>'; }
-  else if (btn._origText) btn.innerHTML = btn._origText;
-}
-
-/* ============================================================
-   SCREENS
-============================================================ */
-function showScreen(name) {
-  document.getElementById('authScreen').classList.toggle('hidden', name !== 'auth');
-  document.getElementById('gamesScreen').classList.toggle('hidden', name !== 'games');
-  document.getElementById('appScreen').classList.toggle('hidden', name !== 'app');
-}
-
-/* ============================================================
-   MODAL
-============================================================ */
-function openModal() { document.getElementById('modalOverlay').classList.remove('hidden'); }
-function closeModal(e) {
-  if (e && e.target !== document.getElementById('modalOverlay')) return;
-  document.getElementById('modalOverlay').classList.add('hidden');
-}
-
-/* ============================================================
-   TOAST
-============================================================ */
-function showToast(msg, type = 'info') {
-  const colors = { success: 'var(--green)', error: 'var(--red)', warning: 'var(--orange)', info: '#3b82f6' };
-  const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
-  const el = document.createElement('div');
-  el.className = 'toast-item';
-  el.style.borderLeft = '3px solid ' + colors[type];
-  el.innerHTML = `<span>${icons[type]}</span><span>${msg}</span>`;
-  document.getElementById('toastContainer').appendChild(el);
-  setTimeout(() => el.remove(), 3000);
-}
-
-/* ============================================================
-   INIT
-============================================================ */
-(async () => {
-  showScreen('auth');
-  // Check for existing session
-  const { data: { session } } = await sb.auth.getSession();
-  if (session?.user) {
-    await onLogin(session.user);
-  }
-  // Listen to auth changes
-  sb.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_OUT') showScreen('auth');
-  });
-})();
-</script>
-</body>
-</html>
+      ✅ Ganador/Empate: <strong style="color:var(--gre
