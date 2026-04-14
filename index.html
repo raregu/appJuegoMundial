@@ -306,6 +306,30 @@ tr:hover td{background:rgba(255,255,255,.02);}
   padding:9px 14px;font-size:13px;color:var(--txt);box-shadow:var(--sh);pointer-events:auto;
   max-width:280px;display:flex;align-items:center;gap:7px;animation:slideIn .2s;}
 @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* ===== PLAN / PAYMENT ===== */
+.plan-banner{border-radius:var(--r);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:16px;}
+.plan-banner.free{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.3);}
+.plan-banner.paid{background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.3);}
+.plan-banner.limit{background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.4);}
+.plan-info{display:flex;align-items:center;gap:10px;}
+.plan-badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px;}
+.plan-badge.free{background:rgba(34,197,94,.15);color:var(--green);}
+.plan-badge.starter{background:rgba(0,53,128,.25);color:#60a5fa;}
+.plan-badge.pro{background:rgba(168,85,247,.2);color:#c084fc;}
+.plan-badge.enterprise{background:rgba(255,215,0,.15);color:var(--gold);}
+.plan-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:16px 0;}
+.plan-card{background:var(--dark3);border:2px solid var(--border);border-radius:12px;padding:18px;cursor:pointer;transition:all .2s;text-align:center;}
+.plan-card:hover{border-color:var(--gold);transform:translateY(-2px);}
+.plan-card.recommended{border-color:var(--gold);position:relative;}
+.plan-card.recommended::before{content:'Popular';position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--gold);color:#000;font-size:10px;font-weight:800;padding:2px 10px;border-radius:20px;}
+.plan-card-name{font-size:15px;font-weight:800;margin-bottom:4px;}
+.plan-card-price{font-size:26px;font-weight:900;color:var(--gold);margin:8px 0;}
+.plan-card-price span{font-size:13px;font-weight:400;color:var(--txt2);}
+.plan-card-limit{font-size:12px;color:var(--txt2);margin-bottom:12px;}
+.plan-card-currency{font-size:11px;color:var(--txt2);margin-bottom:12px;}
+.payment-steps{background:var(--dark4);border-radius:var(--r);padding:14px 16px;margin-top:12px;font-size:12px;color:var(--txt2);line-height:1.7;}
+.payment-steps strong{color:var(--txt);}
 </style>
 </head>
 <body>
@@ -399,6 +423,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
         <div class="card"><h3 style="font-size:13px;font-weight:700;color:var(--txt2);margin-bottom:12px;">📋 Próximos Partidos</h3><div id="adminNextMatches"></div></div>
         <div class="card"><h3 style="font-size:13px;font-weight:700;color:var(--txt2);margin-bottom:12px;">🏅 Top 5</h3><div id="adminTopPlayers"></div></div>
       </div>
+      <div id="adminPlanStatus"></div>
       <div style="margin-top:16px;" class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
           <h3 style="font-size:13px;font-weight:700;color:var(--txt2);">🔑 Código de Invitación</h3>
@@ -510,6 +535,15 @@ const GROUPS_LIST = ['A','B','C','D','E','F','G','H','I','J','K','L'];
 const PHASE_LABELS = {groups:'Fase de Grupos',r16:'Octavos',qf:'Cuartos',sf:'Semis',third:'3er Puesto',final:'Final'};
 const PHASE_ORDER = ['groups','r16','qf','sf','third','final'];
 const PHASE_MULT = {groups:1,r16:2,qf:3,sf:4,third:5,final:5};
+
+/* Planes de pago */
+const PLAN_CONFIG = {
+  free:       { label:'Gratis',     max:10,  price:0,  priceStr:'Gratis',  color:'var(--green)',  icon:'🎁' },
+  starter:    { label:'Starter',    max:50,  price:5,  priceStr:'USD $5',  color:'#60a5fa',       icon:'⭐' },
+  pro:        { label:'Pro',        max:100, price:10, priceStr:'USD $10', color:'#c084fc',       icon:'🚀' },
+  enterprise: { label:'Enterprise', max:999, price:30, priceStr:'USD $30', color:'var(--gold)',   icon:'👑' },
+};
+const SUPABASE_FN_URL = 'https://eknrnhhguoxkjckckcli.supabase.co/functions/v1';
 
 /* ============================================================
    APP STATE
@@ -837,6 +871,25 @@ async function joinGame() {
   // Check if already member
   const { data: existing } = await sb.from('game_members')
     .select('id').eq('game_id', game.id).eq('user_id', S.user.id).single();
+  // Check member limit (only for new members)
+  if (!existing) {
+    const { count: memberCount } = await sb.from('game_members')
+      .select('*', { count: 'exact', head: true })
+      .eq('game_id', game.id).eq('active', true);
+    const maxM = game.max_members || 10;
+    if (memberCount >= maxM) {
+      const plan = game.plan || 'free';
+      const planCfg = PLAN_CONFIG[plan];
+      document.getElementById('joinAlert').className='alert alert-error';
+      document.getElementById('joinAlert').innerHTML = `
+        <strong>🔒 Juego lleno</strong> (${memberCount}/${maxM} jugadores)<br>
+        <span style="font-size:12px;">El administrador debe mejorar el plan para admitir más jugadores.</span>
+        ${plan === 'free' ? `<br><span style="font-size:11px;color:var(--txt2);">Plan actual: Gratis (máx. 10). Planes pagos desde USD $5.</span>` : ''}
+      `;
+      setLoading('joinGameBtn',false);
+      return;
+    }
+  }
   if (existing) {
     closeModal();
     setLoading('joinGameBtn',false);
@@ -993,6 +1046,25 @@ function renderAdminHome() {
     <div class="stat-card"><span class="stat-icon">🎯</span><div class="stat-value">${totalPreds}</div><div class="stat-label">Predicciones</div></div>
   `;
   document.getElementById('adminInviteCode').textContent = S.game.invite_code;
+
+  // Plan / payment status
+  const plan = S.game.plan || 'free';
+  const planCfg = PLAN_CONFIG[plan];
+  const atLimit = players >= planCfg.max;
+  const isPaid = plan !== 'free';
+  document.getElementById('adminPlanStatus').innerHTML = `
+    <div class="plan-banner ${atLimit ? 'limit' : isPaid ? 'paid' : 'free'}" style="margin-top:14px;">
+      <div class="plan-info">
+        <span class="plan-badge ${plan}">${planCfg.icon} ${planCfg.label}</span>
+        <span style="font-size:13px;">
+          ${atLimit
+            ? `<strong style="color:var(--orange);">⚠️ Límite alcanzado</strong> · ${players}/${planCfg.max === 999 ? '∞' : planCfg.max} jugadores`
+            : `${players} / ${planCfg.max === 999 ? '∞' : planCfg.max} jugadores`}
+        </span>
+        ${isPaid ? `<span style="font-size:11px;color:var(--green);">✅ Pago confirmado</span>` : ''}
+      </div>
+      ${plan !== 'enterprise' ? `<button class="btn btn-gold btn-sm" onclick="openUpgradeModal()">⬆️ Mejorar plan</button>` : ''}
+    </div>`;
 
   // Next matches
   const next = S.matches.filter(m => {
@@ -1644,9 +1716,127 @@ function showScreen(id) {
 }
 
 /* ============================================================
+   PAYMENT / UPGRADE
+============================================================ */
+function openUpgradeModal() {
+  const currentPlan = S.game.plan || 'free';
+  const players = S.members.filter(m => m.active).length;
+
+  const plansHtml = Object.entries(PLAN_CONFIG)
+    .filter(([key]) => key !== 'free')
+    .map(([key, cfg]) => {
+      const isCurrent = key === currentPlan;
+      const isDisabled = isCurrent;
+      return `
+      <div class="plan-card${key === 'starter' ? ' recommended' : ''}" style="opacity:${isDisabled?'.5':'1'};">
+        <div class="plan-card-name">${cfg.icon} ${cfg.label}</div>
+        <div class="plan-card-price">${cfg.priceStr.replace('USD ','')} <span>USD · pago único</span></div>
+        <div class="plan-card-limit">Hasta ${cfg.max === 999 ? 'ilimitados' : cfg.max} jugadores</div>
+        <div class="plan-card-currency" style="margin-bottom:8px;">💳 Se cobra en tu moneda local vía MercadoPago</div>
+        ${isCurrent
+          ? `<button class="btn btn-ghost btn-sm btn-full" disabled>✓ Plan actual</button>`
+          : `<button class="btn btn-gold btn-sm btn-full" onclick="startPayment('${key}')">Pagar con MercadoPago</button>`}
+      </div>`;
+    }).join('');
+
+  document.getElementById('modalTitle').textContent = '⬆️ Mejorar plan del juego';
+  document.getElementById('modalBody').innerHTML = `
+    <div style="font-size:13px;color:var(--txt2);margin-bottom:14px;">
+      Juego: <strong style="color:var(--txt);">${S.game.name}</strong> ·
+      Plan actual: <strong class="plan-badge ${currentPlan}" style="display:inline;">${(PLAN_CONFIG[currentPlan]||PLAN_CONFIG.free).label}</strong> ·
+      Jugadores activos: <strong>${players}</strong>
+    </div>
+    <div class="plan-cards">${plansHtml}</div>
+    <div class="payment-steps">
+      <strong>¿Cómo funciona?</strong><br>
+      1. Elige el plan → serás redirigido a MercadoPago<br>
+      2. Paga con tarjeta, transferencia o efectivo en tu moneda local (CLP, ARS, BRL, etc.)<br>
+      3. Al confirmar el pago, el límite de tu juego se actualiza automáticamente ✅
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+    </div>
+  `;
+  openModal();
+}
+
+async function startPayment(plan) {
+  const cfg = PLAN_CONFIG[plan];
+  if (!cfg) return;
+
+  // Confirm
+  const planName = `${cfg.icon} ${cfg.label} (hasta ${cfg.max === 999 ? 'ilimitados' : cfg.max} jugadores) · ${cfg.priceStr}`;
+  if (!confirm(`Vas a pagar el plan:\n\n${planName}\n\n¿Continuar?`)) return;
+
+  showToast('Creando link de pago...', 'info');
+  closeModal();
+
+  try {
+    const res = await fetch(`${SUPABASE_FN_URL}/create-payment`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${(await sb.auth.getSession()).data.session?.access_token}`
+      },
+      body: JSON.stringify({
+        game_id: S.game.id,
+        game_name: S.game.name,
+        plan,
+        payer_email: S.profile.email || S.user.email
+      })
+    });
+
+    const data = await res.json();
+    if (data.error) { showToast('Error: ' + data.error, 'error'); return; }
+
+    // Redirect to MercadoPago checkout
+    const url = data.init_point || data.sandbox_init_point;
+    if (url) {
+      window.location.href = url;
+    } else {
+      showToast('No se pudo obtener el link de pago. Verifica la configuración de MercadoPago.', 'error');
+    }
+  } catch (err) {
+    showToast('Error de conexión: ' + err.message, 'error');
+  }
+}
+
+async function handlePaymentReturn() {
+  const params = new URLSearchParams(window.location.search);
+  const payment = params.get('payment');
+  const gameId = params.get('game');
+  const plan = params.get('plan');
+
+  if (!payment || !gameId) return;
+
+  // Clean URL
+  window.history.replaceState({}, '', window.location.pathname);
+
+  if (payment === 'success' && gameId && plan) {
+    // Payment webhook updates the DB; we wait a moment and reload game data
+    showToast('✅ Pago recibido. Actualizando plan...', 'success');
+    await new Promise(r => setTimeout(r, 2000));
+
+    // Reload game to get updated plan
+    const { data: updatedGame } = await sb.from('games').select('*').eq('id', gameId).single();
+    if (updatedGame) {
+      S.game = updatedGame;
+      showToast(`🎉 ¡Plan ${(PLAN_CONFIG[updatedGame.plan] || PLAN_CONFIG.free).label} activado! Ahora puedes tener hasta ${(PLAN_CONFIG[updatedGame.plan] || PLAN_CONFIG.free).max === 999 ? 'ilimitados' : (PLAN_CONFIG[updatedGame.plan] || PLAN_CONFIG.free).max} jugadores.`, 'success');
+    }
+  } else if (payment === 'failure') {
+    showToast('❌ El pago no se completó. Podés intentarlo de nuevo desde el panel de administración.', 'error');
+  } else if (payment === 'pending') {
+    showToast('⏳ Pago pendiente de confirmación. Te notificaremos cuando sea aprobado.', 'info');
+  }
+}
+
+/* ============================================================
    INIT
 ============================================================ */
 (async () => {
+  // Handle return from MercadoPago payment flow
+  await handlePaymentReturn();
+
   const { data: { session } } = await sb.auth.getSession();
   if (session?.user) {
     await onLogin(session.user);
