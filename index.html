@@ -651,10 +651,8 @@ async function doRegister() {
   setLoading('registerBtn', false);
 
   if (error) {
-    const msg = error.message.includes('already registered')
+    const msg = error.message.includes('already registered') || error.message.includes('already been registered')
       ? 'Ya existe una cuenta con ese correo. Intenta iniciar sesión.'
-      : error.message.includes('500') || error.status === 500
-      ? 'Error del servidor. Revisa que el trigger handle_new_user esté correcto en Supabase.'
       : error.message;
     showAuthAlert('registerAlert', msg);
     return;
@@ -664,11 +662,7 @@ async function doRegister() {
 
   // Sin sesión = Supabase envió email de confirmación (confirmación activada)
   if (!data.session) {
-    // Guardar nombre para cuando confirme y vuelva a la app
-    if (user) {
-      await sb.from('profiles')
-        .upsert({ id: user.id, full_name: name, email: user.email }, { onConflict: 'id' });
-    }
+    // No intentar upsert sin sesión (RLS lo bloquea) — el trigger handle_new_user ya crea el perfil
     // Mostrar pantalla de "revisá tu correo"
     document.getElementById('formRegister').innerHTML = `
       <div style="text-align:center;padding:10px 0;">
