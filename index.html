@@ -700,6 +700,13 @@ async function onLogin(user) {
   if (!profile) {
     await sb.from('profiles').upsert({ id: user.id, full_name: S.profile.full_name, email: user.email });
   }
+  // Procesar retorno de pago si existe (actualiza plan y entra al juego)
+  if (window._pendingPayment) {
+    showScreen('games');
+    await loadGames();
+    await processPendingPayment();
+    return;
+  }
   showScreen('games');
   await loadGames();
 }
@@ -1801,32 +1808,48 @@ async function startPayment(plan) {
   }
 }
 
-async function handlePaymentReturn() {
+function handlePaymentReturn() {
   const params = new URLSearchParams(window.location.search);
   const payment = params.get('payment');
-  const gameId = params.get('game');
-  const plan = params.get('plan');
-
+  const gameId  = params.get('game');
+  const plan    = params.get('plan');
   if (!payment || !gameId) return;
-
-  // Clean URL
   window.history.replaceState({}, '', window.location.pathname);
+  // Guardamos para procesarlo en onLogin, una vez que haya sesión activa
+  window._pendingPayment = { payment, gameId, plan };
+}
 
-  if (payment === 'success' && gameId && plan) {
-    // Payment webhook updates the DB; we wait a moment and reload game data
-    showToast('✅ Pago recibido. Actualizando plan...', 'success');
-    await new Promise(r => setTimeout(r, 2000));
+async function processPendingPayment() {
+  if (!window._pendingPayment) return;
+  const { payment, gameId, plan } = window._pendingPayment;
+  window._pendingPayment = null;
 
-    // Reload game to get updated plan
-    const { data: updatedGame } = await sb.from('games').select('*').eq('id', gameId).single();
-    if (updatedGame) {
-      S.game = updatedGame;
-      showToast(`🎉 ¡Plan ${(PLAN_CONFIG[updatedGame.plan] || PLAN_CONFIG.free).label} activado! Ahora puedes tener hasta ${(PLAN_CONFIG[updatedGame.plan] || PLAN_CONFIG.free).max === 999 ? 'ilimitados' : (PLAN_CONFIG[updatedGame.plan] || PLAN_CONFIG.free).max} jugadores.`, 'success');
+  if (payment === 'success' && gameId && plan && PLAN_CONFIG[plan]) {
+    const cfg = PLAN_CONFIG[plan];
+    showToast('✅ Pago confirmado. Activando plan...', 'success');
+
+    // Actualizar la DB directamente desde el cliente (no dependemos del webhook)
+    const { error } = await sb.from('games').update({
+      plan,
+      max_members: cfg.max,
+      payment_status: 'paid'
+    }).eq('id', gameId);
+
+    if (error) {
+      console.error('Error actualizando plan:', error.message);
+      showToast('Pago OK pero no se pudo actualizar el plan automáticamente. Contacta soporte.', 'error');
+      return;
     }
+
+    showToast(`🎉 ¡Plan ${cfg.icon} ${cfg.label} activado! Hasta ${cfg.max === 999 ? 'ilimitados' : cfg.max} jugadores.`, 'success');
+
+    // Entrar directo al juego pagado
+    await enterGame(gameId);
+
   } else if (payment === 'failure') {
-    showToast('❌ El pago no se completó. Podés intentarlo de nuevo desde el panel de administración.', 'error');
+    showToast('❌ El pago no se completó. Podés intentarlo de nuevo desde el panel.', 'error');
   } else if (payment === 'pending') {
-    showToast('⏳ Pago pendiente de confirmación. Te notificaremos cuando sea aprobado.', 'info');
+    showToast('⏳ Pago pendiente de confirmación. El plan se activará cuando se apruebe.', 'info');
   }
 }
 
@@ -1834,8 +1857,8 @@ async function handlePaymentReturn() {
    INIT
 ============================================================ */
 (async () => {
-  // Handle return from MercadoPago payment flow
-  await handlePaymentReturn();
+  // Capturar parámetros de retorno de MercadoPago (síncrono, antes del login)
+  handlePaymentReturn();
 
   const { data: { session } } = await sb.auth.getSession();
   if (session?.user) {
