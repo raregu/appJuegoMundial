@@ -1967,12 +1967,11 @@ async function processPendingPayment() {
   handlePaymentReturn();
 
   // Detectar si es un retorno de recuperación de contraseña ANTES de getSession
+  // NO limpiar el hash aquí — dejar que Supabase lo lea y establezca la sesión
   const hashParams = new URLSearchParams(window.location.hash.substring(1));
-  if (hashParams.get('type') === 'recovery') {
-    window.history.replaceState({}, '', window.location.pathname);
-    showScreen('reset');
-    // El listener se encarga del resto cuando dispare PASSWORD_RECOVERY
-  } else {
+  const isRecovery = hashParams.get('type') === 'recovery';
+
+  if (!isRecovery) {
     const { data: { session } } = await sb.auth.getSession();
     if (session?.user) {
       await onLogin(session.user);
@@ -1982,6 +1981,8 @@ async function processPendingPayment() {
   // Auth state listener
   sb.auth.onAuthStateChange(async (event, session) => {
     if (event === 'PASSWORD_RECOVERY') {
+      // Ahora sí limpiar el hash (Supabase ya procesó el token)
+      window.history.replaceState({}, '', window.location.pathname);
       showScreen('reset');
       return;
     }
