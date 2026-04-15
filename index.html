@@ -24,39 +24,86 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--dark);color:va
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:var(--dark5);border-radius:4px;}
 
-/* ===== FONDO GLOBAL ===== */
+/* ===== FONDO MUNDIAL ===== */
+body{background:#010608;}
+
+/* Capa base: atmósfera de estadio nocturno */
 body::before{
-  content:'';position:fixed;inset:0;z-index:-2;
+  content:'';position:fixed;inset:0;z-index:-3;
   background:
-    radial-gradient(ellipse 80% 60% at 15% 20%, rgba(232,25,60,.13) 0%,transparent 55%),
-    radial-gradient(ellipse 70% 50% at 85% 80%, rgba(26,86,219,.16) 0%,transparent 55%),
-    radial-gradient(ellipse 50% 40% at 50% 50%, rgba(255,215,0,.04) 0%,transparent 60%),
-    linear-gradient(160deg, #03070f 0%, #05101f 50%, #070d1c 100%);
+    conic-gradient(from 70deg at -3% -3%, transparent 0deg, rgba(255,248,180,.1) 20deg, rgba(255,248,180,.04) 30deg, transparent 44deg),
+    conic-gradient(from 252deg at 103% -3%, transparent 0deg, rgba(255,248,180,.1) 20deg, rgba(255,248,180,.04) 30deg, transparent 44deg),
+    radial-gradient(ellipse 110% 55% at 50% 108%, rgba(0,110,30,.5) 0%, rgba(0,50,12,.2) 45%, transparent 65%),
+    linear-gradient(180deg, #010507 0%, #010c06 70%, #021608 100%);
 }
-body::after{
-  content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
-  background-image:
-    linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
-  background-size:60px 60px;
-  mask-image:radial-gradient(ellipse 100% 100% at 50% 50%,black 30%,transparent 80%);
+
+/* Elementos decorativos del fondo */
+.wc-bg{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none;}
+
+/* Balón grande de fondo */
+.wc-ball-bg{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  font-size:min(70vw,70vh);
+  opacity:.028;
+  animation:spinBall 60s linear infinite;
+  filter:blur(2px);
+  user-select:none;
+}
+@keyframes spinBall{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(360deg)}}
+
+/* Silueta estadio */
+.wc-stadium-svg{position:absolute;bottom:0;left:0;right:0;width:100%;pointer-events:none;}
+
+/* Mosaico de banderas */
+#wcFlagGrid{
+  position:absolute;inset:0;
+  display:grid;
+  grid-template-columns:repeat(auto-fill,72px);
+  gap:3px;padding:3px;
+  opacity:0;
+  animation:flagGridIn 1.5s ease forwards;
+  overflow:hidden;align-content:start;
+}
+@keyframes flagGridIn{to{opacity:.13;}}
+#wcFlagGrid img{
+  width:72px;height:48px;
+  object-fit:cover;
+  border-radius:3px;
+  display:block;
+}
+
+/* Degradado oscuro sobre el mosaico */
+.wc-overlay{
+  position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 70% 70% at 50% 45%, rgba(1,6,8,.55) 0%, transparent 80%),
+    linear-gradient(180deg,rgba(1,6,8,.5) 0%,rgba(1,6,8,.2) 40%,rgba(1,6,8,.7) 75%,rgba(1,6,8,.97) 100%);
+}
+
+/* Líneas de campo */
+.wc-field{
+  position:absolute;bottom:0;left:0;right:0;height:42%;
+  background:repeating-linear-gradient(90deg,transparent 0,transparent 90px,rgba(255,255,255,.02) 90px,rgba(255,255,255,.02) 91px);
+  mask-image:linear-gradient(180deg,transparent 0%,rgba(0,0,0,.8) 60%,black 100%);
+  -webkit-mask-image:linear-gradient(180deg,transparent 0%,rgba(0,0,0,.8) 60%,black 100%);
 }
 
 /* ===== AUTH ===== */
 #authScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;position:relative;}
 .auth-box{
-  background:rgba(8,15,30,.8);
-  border:1px solid var(--border2);
+  background:rgba(2,12,5,.82);
+  border:1px solid rgba(255,255,255,.1);
   border-radius:24px;
   padding:44px 40px;
   width:100%;max-width:430px;
-  box-shadow:0 32px 80px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.07);
+  box-shadow:0 32px 80px rgba(0,0,0,.8), 0 0 60px rgba(0,80,20,.15), inset 0 1px 0 rgba(255,255,255,.07);
   position:relative;z-index:1;
-  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);
 }
 .auth-box::before{
   content:'';position:absolute;inset:0;border-radius:24px;pointer-events:none;
-  background:linear-gradient(135deg,rgba(255,215,0,.03) 0%,transparent 50%,rgba(26,86,219,.04) 100%);
+  background:linear-gradient(180deg,rgba(255,215,0,.04) 0%,transparent 40%,rgba(0,80,20,.06) 100%);
 }
 .auth-logo{text-align:center;margin-bottom:32px;}
 .auth-logo .trophy{font-size:60px;display:block;filter:drop-shadow(0 0 24px rgba(255,215,0,.5));animation:float 3s ease-in-out infinite;}
@@ -400,6 +447,49 @@ tr:hover td{background:rgba(255,255,255,.025);}
 </head>
 <body>
 
+<!-- ===== WORLD CUP BACKGROUND ===== -->
+<div class="wc-bg" id="wcBg">
+  <div id="wcFlagGrid"></div>
+  <div class="wc-overlay"></div>
+  <div class="wc-ball-bg">⚽</div>
+  <div class="wc-field"></div>
+  <svg class="wc-stadium-svg" viewBox="0 0 1440 220" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+    <defs>
+      <linearGradient id="stadGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="rgba(0,15,5,0)"/>
+        <stop offset="100%" stop-color="rgba(0,20,8,0.95)"/>
+      </linearGradient>
+    </defs>
+    <!-- Graderías del estadio -->
+    <path d="M0,220 L0,160 Q60,140 120,130 L180,110 Q220,100 260,105 L310,90 Q360,80 420,85 L480,72 Q530,62 580,67 L620,58 Q660,50 700,52 L740,50 Q780,50 820,52 L860,58 Q910,63 960,68 L1020,72 Q1070,80 1120,85 L1180,90 Q1220,100 1260,110 L1320,130 Q1380,140 1440,160 L1440,220 Z" fill="rgba(0,18,6,0.85)"/>
+    <!-- Segunda gradería -->
+    <path d="M0,220 L0,185 Q80,170 160,165 L280,155 Q380,148 480,150 L560,142 Q620,136 720,134 L800,134 Q880,134 960,138 L1040,144 Q1140,150 1240,155 L1360,165 Q1420,170 1440,185 L1440,220 Z" fill="rgba(0,12,4,0.9)"/>
+    <!-- Pasto con rayas -->
+    <rect x="0" y="195" width="1440" height="25" fill="rgba(0,50,15,0.6)"/>
+    <rect x="0" y="200" width="1440" height="2" fill="rgba(255,255,255,0.06)"/>
+    <!-- Focos del estadio izq -->
+    <rect x="95" y="60" width="6" height="55" rx="2" fill="rgba(255,250,200,0.5)"/>
+    <ellipse cx="98" cy="58" rx="10" ry="5" fill="rgba(255,250,200,0.4)"/>
+    <polygon points="98,58 20,200 60,200" fill="rgba(255,252,200,0.04)"/>
+    <!-- Focos del estadio der -->
+    <rect x="1339" y="60" width="6" height="55" rx="2" fill="rgba(255,250,200,0.5)"/>
+    <ellipse cx="1342" cy="58" rx="10" ry="5" fill="rgba(255,250,200,0.4)"/>
+    <polygon points="1342,58 1380,200 1420,200" fill="rgba(255,252,200,0.04)"/>
+    <!-- Ventanas graderías izq -->
+    <rect x="160" y="130" width="12" height="8" rx="1" fill="rgba(255,240,150,0.15)"/>
+    <rect x="185" y="125" width="10" height="7" rx="1" fill="rgba(255,240,150,0.12)"/>
+    <rect x="210" y="120" width="12" height="7" rx="1" fill="rgba(255,240,150,0.1)"/>
+    <rect x="240" y="115" width="10" height="6" rx="1" fill="rgba(255,240,150,0.12)"/>
+    <!-- Ventanas graderías der -->
+    <rect x="1268" y="130" width="12" height="8" rx="1" fill="rgba(255,240,150,0.15)"/>
+    <rect x="1245" y="125" width="10" height="7" rx="1" fill="rgba(255,240,150,0.12)"/>
+    <rect x="1218" y="120" width="12" height="7" rx="1" fill="rgba(255,240,150,0.1)"/>
+    <rect x="1190" y="115" width="10" height="6" rx="1" fill="rgba(255,240,150,0.12)"/>
+    <!-- Degradado inferior -->
+    <rect x="0" y="0" width="1440" height="220" fill="url(#stadGrad)"/>
+  </svg>
+</div>
+
 <!-- ===== AUTH ===== -->
 <div id="authScreen">
   <div class="auth-box">
@@ -701,6 +791,32 @@ function getLeaderboard() {
     .filter(m => m.active)
     .map(m => ({ ...m, ...getPlayerStats(m.user_id) }))
     .sort((a, b) => b.total - a.total || b.exact - a.exact);
+}
+
+/* ============================================================
+   WORLD CUP BACKGROUND
+============================================================ */
+function initWorldCupBg() {
+  const codes = [
+    'mx','ca','us','ar','br','fr','de','es','pt','jp',
+    'kr','ma','sn','nl','be','ch','uy','co','au','tr',
+    'cz','se','ba','qa','ir','za','ec','hr','gh','eg',
+    'nz','sa','dz','no','at','ci','tn','ht','iq','jo',
+    'uz','cd','py','pa','cv','cw','gb','hr'
+  ];
+  const grid = document.getElementById('wcFlagGrid');
+  if (!grid) return;
+  // Llenar la grilla repitiendo banderas hasta cubrir la pantalla (~120 imágenes)
+  const total = 120;
+  for (let i = 0; i < total; i++) {
+    const code = codes[i % codes.length];
+    const img = document.createElement('img');
+    img.src = `https://flagcdn.com/w80/${code}.png`;
+    img.alt = code;
+    img.loading = 'lazy';
+    img.onerror = () => { img.style.visibility = 'hidden'; };
+    grid.appendChild(img);
+  }
 }
 
 /* ============================================================
@@ -2029,6 +2145,9 @@ async function processPendingPayment() {
    INIT
 ============================================================ */
 (async () => {
+  // Inicializar fondo animado del Mundial
+  initWorldCupBg();
+
   // Capturar parámetros de retorno de MercadoPago (síncrono, antes del login)
   handlePaymentReturn();
 
