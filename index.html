@@ -539,8 +539,8 @@ const SUPABASE_URL = 'https://eknrnhhguoxkjckckcli.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVrbnJuaGhndW94a2pja2NrY2xpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1MDQ4MjYsImV4cCI6MjA5MTA4MDgyNn0.ojUdRo-_dcrTQPm1crulbVjctSMqLjsmbNwT8KD8hro';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
   auth: {
-    flowType: 'pkce',            // Inmune al escaneo de links de Outlook/Hotmail
-    detectSessionInUrl: true,    // Necesario para que PKCE detecte el code en la URL
+    flowType: 'implicit',
+    detectSessionInUrl: false,
     persistSession: true,
     storage: window.localStorage
   }
@@ -1966,17 +1966,28 @@ async function processPendingPayment() {
   // Capturar parámetros de retorno de MercadoPago (síncrono, antes del login)
   handlePaymentReturn();
 
-  // Con PKCE, Supabase detecta automáticamente el ?code= en la URL
-  // El evento PASSWORD_RECOVERY se dispara solo — no hace falta detectarlo manualmente
-  const { data: { session } } = await sb.auth.getSession();
-  if (session?.user) {
-    await onLogin(session.user);
+  // Detectar retorno de recuperación de contraseña desde el hash
+  const hashParams = new URLSearchParams(window.location.hash.substring(1));
+  const hashType = hashParams.get('type');
+  const hashAccessToken = hashParams.get('access_token');
+  const hashRefreshToken = hashParams.get('refresh_token');
+
+  if (hashType === 'recovery' && hashAccessToken) {
+    // Limpiar hash de la URL
+    window.history.replaceState({}, '', window.location.pathname);
+    // Establecer sesión con los tokens del link de recuperación
+    await sb.auth.setSession({ access_token: hashAccessToken, refresh_token: hashRefreshToken });
+    showScreen('reset');
+  } else {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session?.user) {
+      await onLogin(session.user);
+    }
   }
 
   // Auth state listener
   sb.auth.onAuthStateChange(async (event, session) => {
     if (event === 'PASSWORD_RECOVERY') {
-      window.history.replaceState({}, '', window.location.pathname);
       showScreen('reset');
       return;
     }
