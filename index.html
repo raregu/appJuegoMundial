@@ -539,8 +539,8 @@ const SUPABASE_URL = 'https://eknrnhhguoxkjckckcli.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVrbnJuaGhndW94a2pja2NrY2xpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1MDQ4MjYsImV4cCI6MjA5MTA4MDgyNn0.ojUdRo-_dcrTQPm1crulbVjctSMqLjsmbNwT8KD8hro';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
   auth: {
-    flowType: 'implicit',        // Necesario para file:// y localhost
-    detectSessionInUrl: false,   // Evita el error "Unsafe attempt"
+    flowType: 'pkce',            // Inmune al escaneo de links de Outlook/Hotmail
+    detectSessionInUrl: true,    // Necesario para que PKCE detecte el code en la URL
     persistSession: true,
     storage: window.localStorage
   }
@@ -1966,22 +1966,16 @@ async function processPendingPayment() {
   // Capturar parámetros de retorno de MercadoPago (síncrono, antes del login)
   handlePaymentReturn();
 
-  // Detectar si es un retorno de recuperación de contraseña ANTES de getSession
-  // NO limpiar el hash aquí — dejar que Supabase lo lea y establezca la sesión
-  const hashParams = new URLSearchParams(window.location.hash.substring(1));
-  const isRecovery = hashParams.get('type') === 'recovery';
-
-  if (!isRecovery) {
-    const { data: { session } } = await sb.auth.getSession();
-    if (session?.user) {
-      await onLogin(session.user);
-    }
+  // Con PKCE, Supabase detecta automáticamente el ?code= en la URL
+  // El evento PASSWORD_RECOVERY se dispara solo — no hace falta detectarlo manualmente
+  const { data: { session } } = await sb.auth.getSession();
+  if (session?.user) {
+    await onLogin(session.user);
   }
 
   // Auth state listener
   sb.auth.onAuthStateChange(async (event, session) => {
     if (event === 'PASSWORD_RECOVERY') {
-      // Ahora sí limpiar el hash (Supabase ya procesó el token)
       window.history.replaceState({}, '', window.location.pathname);
       showScreen('reset');
       return;
