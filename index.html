@@ -1966,14 +1966,22 @@ async function processPendingPayment() {
   // Capturar parámetros de retorno de MercadoPago (síncrono, antes del login)
   handlePaymentReturn();
 
-  const { data: { session } } = await sb.auth.getSession();
-  if (session?.user) {
-    await onLogin(session.user);
+  // Detectar si es un retorno de recuperación de contraseña ANTES de getSession
+  const hashParams = new URLSearchParams(window.location.hash.substring(1));
+  if (hashParams.get('type') === 'recovery') {
+    window.history.replaceState({}, '', window.location.pathname);
+    showScreen('reset');
+    // El listener se encarga del resto cuando dispare PASSWORD_RECOVERY
+  } else {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session?.user) {
+      await onLogin(session.user);
+    }
   }
+
   // Auth state listener
   sb.auth.onAuthStateChange(async (event, session) => {
     if (event === 'PASSWORD_RECOVERY') {
-      // Usuario llegó desde el link de recuperación → mostrar pantalla de nueva contraseña
       showScreen('reset');
       return;
     }
