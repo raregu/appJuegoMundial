@@ -352,6 +352,19 @@ tr:hover td{background:rgba(255,255,255,.02);}
       <div class="form-group"><label>Correo electrónico</label><input id="loginEmail" type="email" placeholder="tu@correo.com" autocomplete="email"></div>
       <div class="form-group"><label>Contraseña</label><input id="loginPassword" type="password" placeholder="Tu contraseña" autocomplete="current-password"></div>
       <button class="btn btn-gold btn-full btn-lg" id="loginBtn" onclick="doLogin()">Entrar al torneo</button>
+      <p style="text-align:center;margin-top:12px;">
+        <a href="#" onclick="showForgotPassword();return false;" style="font-size:13px;color:var(--txt2);text-decoration:underline;">¿Olvidaste tu contraseña?</a>
+      </p>
+    </div>
+    <!-- Forgot password form -->
+    <div id="formForgot" class="hidden">
+      <div id="forgotAlert"></div>
+      <p style="font-size:13px;color:var(--txt2);margin-bottom:14px;">Ingresa tu correo y te enviaremos un link para restablecer tu contraseña.</p>
+      <div class="form-group"><label>Correo electrónico</label><input id="forgotEmail" type="email" placeholder="tu@correo.com" autocomplete="email"></div>
+      <button class="btn btn-gold btn-full btn-lg" id="forgotBtn" onclick="doForgotPassword()">Enviar link de recuperación</button>
+      <p style="text-align:center;margin-top:12px;">
+        <a href="#" onclick="showForgotPassword(false);return false;" style="font-size:13px;color:var(--txt2);text-decoration:underline;">← Volver al inicio de sesión</a>
+      </p>
     </div>
     <!-- Register form -->
     <div id="formRegister" class="hidden">
@@ -362,6 +375,22 @@ tr:hover td{background:rgba(255,255,255,.02);}
       <button class="btn btn-gold btn-full btn-lg" id="registerBtn" onclick="doRegister()">Crear Cuenta</button>
       <p style="font-size:12px;color:var(--txt2);text-align:center;margin-top:12px;">Al registrarte aceptas participar en el torneo</p>
     </div>
+  </div>
+</div>
+
+<!-- ===== RESET PASSWORD SCREEN ===== -->
+<div id="resetScreen" class="hidden" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;">
+  <div class="auth-card" style="width:100%;max-width:420px;">
+    <div class="auth-logo">
+      <span class="trophy">🏆</span>
+      <h1>APP MUNDIAL 2026</h1>
+    </div>
+    <h3 style="color:var(--gold);font-size:16px;font-weight:700;margin-bottom:6px;">Nueva contraseña</h3>
+    <p style="font-size:13px;color:var(--txt2);margin-bottom:16px;">Elige una nueva contraseña para tu cuenta.</p>
+    <div id="resetAlert"></div>
+    <div class="form-group"><label>Nueva contraseña (mínimo 6 caracteres)</label><input id="resetPassword" type="password" placeholder="Nueva contraseña"></div>
+    <div class="form-group"><label>Confirmar contraseña</label><input id="resetPassword2" type="password" placeholder="Repite la contraseña"></div>
+    <button class="btn btn-gold btn-full btn-lg" id="resetBtn" onclick="doUpdatePassword()">Guardar nueva contraseña</button>
   </div>
 </div>
 
@@ -613,6 +642,55 @@ function switchAuthTab(tab) {
   document.getElementById('tabRegister').classList.toggle('active', tab === 'register');
   document.getElementById('formLogin').classList.toggle('hidden', tab !== 'login');
   document.getElementById('formRegister').classList.toggle('hidden', tab !== 'register');
+  document.getElementById('formForgot').classList.add('hidden');
+}
+
+function showForgotPassword(show = true) {
+  document.getElementById('formLogin').classList.toggle('hidden', show);
+  document.getElementById('formForgot').classList.toggle('hidden', !show);
+  document.getElementById('tabLogin').classList.toggle('active', !show);
+  document.getElementById('tabRegister').classList.remove('active');
+  document.getElementById('formRegister').classList.add('hidden');
+  if (show) document.getElementById('forgotEmail').focus();
+}
+
+async function doForgotPassword() {
+  const email = document.getElementById('forgotEmail').value.trim();
+  if (!email) { showAuthAlert('forgotAlert', 'Ingresa tu correo electrónico'); return; }
+  setLoading('forgotBtn', true);
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + window.location.pathname
+  });
+  setLoading('forgotBtn', false);
+  if (error) { showAuthAlert('forgotAlert', error.message); return; }
+  document.getElementById('formForgot').innerHTML = `
+    <div style="text-align:center;padding:10px 0;">
+      <div style="font-size:52px;margin-bottom:14px;">📧</div>
+      <h3 style="color:var(--gold);font-size:17px;font-weight:800;margin-bottom:8px;">¡Revisa tu correo!</h3>
+      <p style="font-size:13px;color:var(--txt2);line-height:1.6;">
+        Te enviamos un link para restablecer tu contraseña a<br>
+        <strong style="color:var(--txt);">${email}</strong>
+      </p>
+      <p style="font-size:12px;color:var(--txt2);margin-top:10px;">
+        Haz clic en el link del correo para elegir una nueva contraseña.
+      </p>
+      <button class="btn btn-ghost btn-full" style="margin-top:18px;" onclick="showForgotPassword(false)">← Volver al inicio de sesión</button>
+    </div>`;
+}
+
+async function doUpdatePassword() {
+  const p1 = document.getElementById('resetPassword').value;
+  const p2 = document.getElementById('resetPassword2').value;
+  if (!p1 || p1.length < 6) { showAuthAlert('resetAlert', 'La contraseña debe tener al menos 6 caracteres'); return; }
+  if (p1 !== p2) { showAuthAlert('resetAlert', 'Las contraseñas no coinciden'); return; }
+  setLoading('resetBtn', true);
+  const { error } = await sb.auth.updateUser({ password: p1 });
+  setLoading('resetBtn', false);
+  if (error) { showAuthAlert('resetAlert', error.message); return; }
+  showToast('✅ Contraseña actualizada correctamente', 'success');
+  await sb.auth.signOut();
+  showScreen('auth');
+  switchAuthTab('login');
 }
 
 async function doLogin() {
@@ -1740,7 +1818,7 @@ function closeModal(e) {
 }
 
 function showScreen(id) {
-  ['authScreen', 'gamesScreen', 'appScreen'].forEach(s => {
+  ['authScreen', 'gamesScreen', 'appScreen', 'resetScreen'].forEach(s => {
     document.getElementById(s).classList.toggle('hidden', s !== id + 'Screen');
   });
 }
@@ -1891,6 +1969,11 @@ async function processPendingPayment() {
   }
   // Auth state listener
   sb.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'PASSWORD_RECOVERY') {
+      // Usuario llegó desde el link de recuperación → mostrar pantalla de nueva contraseña
+      showScreen('reset');
+      return;
+    }
     if (event === 'SIGNED_IN' && session?.user && !S.user) {
       await onLogin(session.user);
     }
