@@ -2026,8 +2026,8 @@ function openUpgradeModal() {
       return `
       <div class="plan-card${key === 'pro' ? ' recommended' : ''}" style="opacity:${isCurrent||isDowngrade?'.5':'1'};">
         <div class="plan-card-name">${cfg.icon} ${cfg.label}</div>
-        <div class="plan-card-price">${cfg.priceStr.replace('USD ','')} <span>USD · único</span></div>
-        <div class="plan-card-limit">Hasta ${cfg.max >= 9999 ? 'ilimitados' : cfg.max} jugadores</div>
+        <div class="plan-card-price" id="price-${key}">${cfg.priceStr.replace('USD ','')} <span>USD · único</span></div>
+        <div class="plan-card-limit">Hasta ${cfg.max} jugadores</div>
         <div class="plan-card-currency" style="margin-bottom:8px;">💳 En tu moneda local vía MercadoPago</div>
         ${isCurrent
           ? `<button class="btn btn-ghost btn-sm btn-full" disabled>✓ Plan actual</button>`
@@ -2044,7 +2044,21 @@ function openUpgradeModal() {
       Plan actual: <strong class="plan-badge ${currentPlan}" style="display:inline;">${(PLAN_CONFIG[currentPlan]||PLAN_CONFIG.free).label}</strong> ·
       Jugadores activos: <strong>${players}</strong>
     </div>
-    <div class="plan-cards">${plansHtml}</div>
+    <div class="plan-cards" id="planCardsContainer">${plansHtml}</div>
+
+    <!-- Código promocional -->
+    <div style="margin:16px 0 4px;display:flex;gap:8px;align-items:center;">
+      <input id="promoCodeInput" type="text" placeholder="¿Tenés código de descuento?"
+        style="flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;
+               background:var(--card);color:var(--txt);font-size:13px;text-transform:uppercase;"
+        oninput="this.value=this.value.toUpperCase()"
+        onkeydown="if(event.key==='Enter')applyPromoCode()">
+      <button class="btn btn-ghost btn-sm" onclick="applyPromoCode()" style="white-space:nowrap;">
+        Aplicar código
+      </button>
+    </div>
+    <div id="promoFeedback" style="font-size:12px;min-height:18px;margin-bottom:8px;"></div>
+
     <div class="payment-steps">
       <strong>¿Cómo funciona?</strong><br>
       1. Elige el plan → serás redirigido a MercadoPago<br>
@@ -2058,12 +2072,70 @@ function openUpgradeModal() {
   openModal();
 }
 
+// Estado del código promo activo en el modal
+let _activePromo = null; // { code, discount_percent }
+
+async function applyPromoCode() {
+  const input = document.getElementById('promoCodeInput');
+  const feedback = document.getElementById('promoFeedback');
+  const code = (input?.value || '').trim().toUpperCase();
+
+  if (!code) {
+    feedback.innerHTML = '';
+    _activePromo = null;
+    _refreshPlanPrices(0);
+    return;
+  }
+
+  feedback.innerHTML = '<span style="color:var(--txt2);">Validando...</span>';
+
+  try {
+    const res = await fetch(`${SUPABASE_FN_URL}/validate-promo`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON}` },
+      body: JSON.stringify({ code })
+    });
+    const data = await res.json();
+
+    if (data.valid) {
+      _activePromo = { code: data.code, discount_percent: data.discount_percent };
+      feedback.innerHTML = `<span style="color:#22c55e;">✅ Código válido — ${data.discount_percent}% de descuento aplicado 🎉</span>`;
+      _refreshPlanPrices(data.discount_percent);
+    } else {
+      _activePromo = null;
+      feedback.innerHTML = `<span style="color:#f87171;">❌ ${data.error || 'Código inválido'}</span>`;
+      _refreshPlanPrices(0);
+    }
+  } catch (err) {
+    feedback.innerHTML = `<span style="color:#f87171;">❌ Error de conexión</span>`;
+  }
+}
+
+function _refreshPlanPrices(discountPercent) {
+  Object.entries(PLAN_CONFIG).forEach(([key, cfg]) => {
+    const el = document.getElementById(`price-${key}`);
+    if (!el || cfg.price === 0) return;
+    if (discountPercent > 0) {
+      const final = (cfg.price * (1 - discountPercent / 100)).toFixed(2);
+      el.innerHTML = `<span style="text-decoration:line-through;opacity:.5;font-size:.85em;">USD ${cfg.price}</span>
+        <strong style="color:#22c55e;">USD ${final}</strong> <span>· único</span>`;
+    } else {
+      el.innerHTML = `${cfg.priceStr.replace('USD ','')} <span>USD · único</span>`;
+    }
+  });
+}
+
 async function startPayment(plan) {
   const cfg = PLAN_CONFIG[plan];
   if (!cfg) return;
 
-  // Confirm
-  const planName = `${cfg.icon} ${cfg.label} (hasta ${cfg.max === 999 ? 'ilimitados' : cfg.max} jugadores) · ${cfg.priceStr}`;
+  const promoCode    = _activePromo?.code || null;
+  const discountPct  = _activePromo?.discount_percent || 0;
+  const finalPrice   = discountPct > 0
+    ? `USD ${(cfg.price * (1 - discountPct / 100)).toFixed(2)} (${discountPct}% OFF)`
+    : cfg.priceStr;
+
+  const planName = `${cfg.icon} ${cfg.label} (hasta ${cfg.max} jugadores) · ${finalPrice}`;
   if (!confirm(`Vas a pagar el plan:\n\n${planName}\n\n¿Continuar?`)) return;
 
   showToast('Creando link de pago...', 'info');
@@ -2077,17 +2149,17 @@ async function startPayment(plan) {
         'Authorization': `Bearer ${SUPABASE_ANON}`
       },
       body: JSON.stringify({
-        game_id: S.game.id,
-        game_name: S.game.name,
+        game_id:    S.game.id,
+        game_name:  S.game.name,
         plan,
-        payer_email: S.profile.email || S.user.email
+        payer_email: S.profile.email || S.user.email,
+        promo_code: promoCode   // null si no hay código
       })
     });
 
     const data = await res.json();
     if (data.error) { showToast('Error: ' + data.error, 'error'); return; }
 
-    // Redirect to MercadoPago checkout
     const url = data.init_point || data.sandbox_init_point;
     if (url) {
       window.location.href = url;
