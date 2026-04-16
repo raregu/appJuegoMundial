@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guía del Administrador · App Mundial 2026</title>
+<style>
+  :root {
+    --bg: #0f1117; --card: #1a1d2e; --border: #2a2d3e;
+    --gold: #f5a623; --gold-glow: rgba(245,166,35,.3);
+    --txt: #e8eaf0; --txt2: #8b8fa8; --green: #22c55e;
+    --orange: #f97316; --purple: #c084fc;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.6; }
+
+  .hero { background: linear-gradient(135deg, #1a1d2e 0%, #0f1117 100%); border-bottom: 1px solid var(--border); padding: 40px 20px 32px; text-align: center; }
+  .hero .badge { display: inline-block; background: rgba(249,115,22,.12); color: var(--orange); border: 1px solid rgba(249,115,22,.3); border-radius: 20px; padding: 4px 14px; font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 16px; }
+  .hero h1 { font-size: clamp(22px, 5vw, 36px); font-weight: 900; color: var(--gold); text-shadow: 0 0 30px var(--gold-glow); margin-bottom: 8px; }
+  .hero p { color: var(--txt2); font-size: 15px; max-width: 520px; margin: 0 auto 20px; }
+  .back-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--card); border: 1px solid var(--border); color: var(--txt2); text-decoration: none; padding: 8px 16px; border-radius: 8px; font-size: 13px; }
+
+  .container { max-width: 720px; margin: 0 auto; padding: 32px 16px 60px; }
+  .section-title { font-size: 11px; font-weight: 700; color: var(--txt2); text-transform: uppercase; letter-spacing: 2px; margin: 40px 0 16px; }
+  .section-title:first-child { margin-top: 0; }
+
+  .step { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 12px; display: flex; gap: 16px; align-items: flex-start; }
+  .step-num { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--orange), #c2410c); color: #fff; font-weight: 900; font-size: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .step-icon { width: 36px; height: 36px; border-radius: 50%; background: rgba(245,166,35,.15); font-size: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .step-content h3 { font-size: 15px; font-weight: 700; color: var(--txt); margin-bottom: 4px; }
+  .step-content p { font-size: 13px; color: var(--txt2); line-height: 1.6; }
+  .step-content .tip { margin-top: 10px; background: rgba(245,166,35,.08); border-left: 3px solid var(--gold); padding: 8px 12px; border-radius: 0 6px 6px 0; font-size: 12px; color: var(--gold); }
+  .step-content .warning { margin-top: 10px; background: rgba(239,68,68,.08); border-left: 3px solid #ef4444; padding: 8px 12px; border-radius: 0 6px 6px 0; font-size: 12px; color: #f87171; }
+  .step-content .highlight { background: rgba(34,197,94,.08); border: 1px solid rgba(34,197,94,.2); border-radius: 8px; padding: 8px 12px; margin-top: 10px; font-size: 13px; color: var(--green); }
+
+  .plan-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 12px; }
+  .plan-card { background: rgba(255,255,255,.04); border: 1px solid var(--border); border-radius: 10px; padding: 12px; text-align: center; }
+  .plan-card .plan-name { font-size: 13px; font-weight: 700; color: var(--txt); margin-bottom: 4px; }
+  .plan-card .plan-limit { font-size: 12px; color: var(--txt2); }
+  .plan-card .plan-price { font-size: 15px; font-weight: 800; color: var(--gold); margin-top: 4px; }
+
+  .faq { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; margin-bottom: 12px; }
+  .faq summary { padding: 16px 20px; font-size: 14px; font-weight: 600; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+  .faq summary::after { content: '›'; font-size: 20px; color: var(--txt2); transition: transform .2s; }
+  .faq[open] summary::after { transform: rotate(90deg); }
+  .faq p { padding: 0 20px 16px; font-size: 13px; color: var(--txt2); line-height: 1.6; }
+
+  .checklist { list-style: none; margin-top: 10px; }
+  .checklist li { padding: 6px 0; font-size: 13px; color: var(--txt2); display: flex; gap: 8px; align-items: flex-start; }
+  .checklist li::before { content: '✅'; flex-shrink: 0; }
+
+  .cta { background: linear-gradient(135deg, rgba(249,115,22,.1), rgba(245,166,35,.05)); border: 1px solid rgba(249,115,22,.3); border-radius: 16px; padding: 28px; text-align: center; margin-top: 40px; }
+  .cta h2 { font-size: 20px; font-weight: 900; color: var(--orange); margin-bottom: 8px; }
+  .cta p { color: var(--txt2); font-size: 14px; margin-bottom: 20px; }
+  .btn-group { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .cta a.primary { background: var(--orange); color: #fff; font-weight: 800; padding: 12px 28px; border-radius: 10px; text-decoration: none; font-size: 15px; }
+  .cta a.secondary { background: var(--card); border: 1px solid var(--border); color: var(--txt); font-weight: 600; padding: 12px 28px; border-radius: 10px; text-decoration: none; font-size: 15px; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="badge">⚙️ Guía del Administrador</div>
+  <h1>⚽ App Mundial 2026</h1>
+  <p>Cómo crear, configurar y gestionar tu juego del Mundial</p>
+  <a href="/" class="back-btn">← Volver a la app</a>
+</div>
+
+<div class="container">
+
+  <div class="section-title">🚀 Configuración inicial</div>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-content">
+      <h3>Crea tu cuenta</h3>
+      <p>Ve a la pantalla principal, haz clic en <strong>Registrarse</strong> e ingresa tu nombre, correo y contraseña. Confirma tu email antes de continuar.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-content">
+      <h3>Crea un nuevo juego</h3>
+      <p>En la pantalla de juegos haz clic en <strong>+ Crear juego</strong>. Elige un nombre (ej: "Prode Empresa 2026"), configura la cantidad máxima de jugadores según el plan y guarda.</p>
+      <div class="highlight">🎮 Se genera automáticamente un <strong>código de invitación único</strong> que compartirás con los jugadores.</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-content">
+      <h3>Compartí el código de invitación</h3>
+      <p>Desde el panel del juego copia el código y envíalo por WhatsApp, email o el medio que prefieras. Cada jugador lo ingresa en la app para unirse.</p>
+      <div class="tip">💡 El link directo también funciona: comparte la URL de la app junto con el código para que los jugadores se registren fácilmente.</div>
+    </div>
+  </div>
+
+  <div class="section-title">👥 Gestión de jugadores</div>
+
+  <div class="step">
+    <div class="step-icon">👁️</div>
+    <div class="step-content">
+      <h3>Ver jugadores activos</h3>
+      <p>En el panel del juego puedes ver todos los jugadores que se unieron, su estado (activo/inactivo) y cuántos pronósticos ingresaron.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-icon">✏️</div>
+    <div class="step-content">
+      <h3>Editar nombre de jugador</h3>
+      <p>Si algún jugador se registró con un nombre incorrecto o apodo, puedes editarlo directamente desde la lista de jugadores.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-icon">🔴</div>
+    <div class="step-content">
+      <h3>Desactivar jugadores</h3>
+      <p>Si alguien ya no participa, puedes marcarlo como inactivo. Esto lo saca del ranking pero no borra su historial de pronósticos.</p>
+      <div class="warning">⚠️ Desactivar un jugador no libera un cupo del plan — el límite se basa en el total histórico de jugadores.</div>
+    </div>
+  </div>
+
+  <div class="section-title">⚽ Gestión de partidos</div>
+
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-content">
+      <h3>Los partidos se cargan automáticamente</h3>
+      <p>Todos los partidos del Mundial 2026 están precargados con fechas, grupos y fases. No necesitas cargar el fixture manualmente.</p>
+      <div class="tip">📅 Los partidos de fase final (octavos, cuartos, semis, final) se actualizan automáticamente con los equipos clasificados.</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">5</div>
+    <div class="step-content">
+      <h3>Ingresar resultados</h3>
+      <p>Una vez que termina un partido, ingresa el resultado real desde el panel de administrador. El sistema calcula automáticamente los puntos de cada jugador y actualiza el ranking.</p>
+      <div class="highlight">🏆 El ranking se actualiza en tiempo real ni bien guardas el resultado.</div>
+    </div>
+  </div>
+
+  <div class="section-title">💳 Planes y límites</div>
+
+  <div class="step" style="display:block;padding:16px 20px;">
+    <p style="font-size:13px;color:var(--txt2);margin-bottom:12px;">Cada juego tiene un límite de jugadores según el plan contratado. Puedes mejorar el plan en cualquier momento.</p>
+    <div class="plan-grid">
+      <div class="plan-card">
+        <div class="plan-name">🆓 Gratis</div>
+        <div class="plan-limit">Hasta 3 jugadores</div>
+        <div class="plan-price">$0</div>
+      </div>
+      <div class="plan-card">
+        <div class="plan-name">⭐ Starter</div>
+        <div class="plan-limit">Hasta 20 jugadores</div>
+        <div class="plan-price">USD $10</div>
+      </div>
+      <div class="plan-card">
+        <div class="plan-name">🚀 Pro</div>
+        <div class="plan-limit">Hasta 50 jugadores</div>
+        <div class="plan-price">USD $20</div>
+      </div>
+      <div class="plan-card">
+        <div class="plan-name">🏢 Business</div>
+        <div class="plan-limit">Hasta 500 jugadores</div>
+        <div class="plan-price">USD $149</div>
+      </div>
+      <div class="plan-card">
+        <div class="plan-name">👑 Enterprise</div>
+        <div class="plan-limit">Hasta 1000 jugadores</div>
+        <div class="plan-price">USD $299</div>
+      </div>
+    </div>
+    <div class="tip" style="margin-top:12px;">💳 El pago es único (no suscripción) y aplica para todo el Mundial 2026.</div>
+  </div>
+
+  <div class="section-title">✅ Checklist antes de lanzar</div>
+
+  <div class="step" style="display:block;padding:16px 20px;">
+    <ul class="checklist">
+      <li>Creé mi cuenta y confirmé el email</li>
+      <li>Creé el juego con el nombre correcto</li>
+      <li>Compartí el código a todos los participantes</li>
+      <li>Los jugadores se registraron y se unieron al juego</li>
+      <li>Verifiqué que el plan soporta la cantidad de jugadores</li>
+      <li>Activé las notificaciones push para no perder partidos</li>
+    </ul>
+  </div>
+
+  <div class="section-title">❓ Preguntas frecuentes</div>
+
+  <details class="faq">
+    <summary>¿Puedo tener varios juegos?</summary>
+    <p>Sí, puedes crear múltiples juegos desde la misma cuenta. Por ejemplo, uno para el trabajo y otro para amigos. Cada juego tiene su código y ranking independiente.</p>
+  </details>
+
+  <details class="faq">
+    <summary>¿Qué pasa si se me llena el cupo de jugadores?</summary>
+    <p>Nuevos jugadores no podrán unirse hasta que mejores el plan. Puedes hacerlo desde el panel del juego → botón "Mejorar plan". El pago se procesa por MercadoPago y el límite se actualiza automáticamente.</p>
+  </details>
+
+  <details class="faq">
+    <summary>¿Los jugadores pueden ver los pronósticos de los demás?</summary>
+    <p>Los pronósticos de cada jugador son privados hasta que comienza el partido. Una vez que empieza, todos pueden ver qué pronosticó cada uno.</p>
+  </details>
+
+  <details class="faq">
+    <summary>¿Puedo corregir un resultado que ingresé mal?</summary>
+    <p>Sí, puedes editar el resultado de cualquier partido desde el panel de administrador. Al guardarlo, los puntos se recalculan automáticamente.</p>
+  </details>
+
+  <details class="faq">
+    <summary>¿Qué pasa si un jugador se registra pero no hace pronósticos?</summary>
+    <p>Ocupa un cupo del plan pero no aparece en el ranking (o aparece en el último lugar con 0 puntos). Puedes desactivarlo si ya no participa.</p>
+  </details>
+
+  <div class="cta">
+    <h2>¡Listo para empezar! 🚀</h2>
+    <p>Crea tu juego y empieza a invitar participantes ahora.</p>
+    <div class="btn-group">
+      <a href="/" class="primary">Ir a la app →</a>
+      <a href="/player-guide.html" class="secondary">Ver guía del jugador</a>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

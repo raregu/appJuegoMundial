@@ -498,6 +498,30 @@ tr:hover td{background:rgba(255,255,255,.025);}
       <h1>APP MUNDIAL 2026</h1>
       <p>Adivina los resultados · Gana puntos · Compite en equipo</p>
     </div>
+
+    <!-- ¿Qué es esto? -->
+    <div style="background:rgba(245,166,35,.06);border:1px solid rgba(245,166,35,.15);border-radius:12px;padding:16px;margin-bottom:20px;">
+      <p style="font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">⚽ ¿De qué se trata?</p>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <span style="font-size:16px;flex-shrink:0;">🎯</span>
+          <p style="font-size:13px;color:var(--txt2);"><strong style="color:var(--txt);">Pronostica</strong> los resultados de cada partido del Mundial 2026 antes de que empiecen.</p>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <span style="font-size:16px;flex-shrink:0;">🏆</span>
+          <p style="font-size:13px;color:var(--txt2);"><strong style="color:var(--txt);">Suma puntos</strong> por cada acierto y compite en el ranking con amigos, familia o compañeros.</p>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <span style="font-size:16px;flex-shrink:0;">🔑</span>
+          <p style="font-size:13px;color:var(--txt2);">Si te invitaron, <strong style="color:var(--txt);">regístrate y usa el código</strong> que te pasaron para unirte al juego.</p>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+        <a href="/player-guide.html" style="flex:1;min-width:120px;text-align:center;background:rgba(96,165,250,.1);border:1px solid rgba(96,165,250,.25);color:#60a5fa;padding:7px 10px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;">👤 Guía jugador</a>
+        <a href="/admin-guide.html" style="flex:1;min-width:120px;text-align:center;background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.25);color:#f97316;padding:7px 10px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;">⚙️ Guía admin</a>
+      </div>
+    </div>
+
     <div class="auth-tabs">
       <div class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">Iniciar Sesión</div>
       <div class="auth-tab" id="tabRegister" onclick="switchAuthTab('register')">Registrarse</div>
@@ -2160,7 +2184,7 @@ async function startPayment(plan) {
     const data = await res.json();
     if (data.error) { showToast('Error: ' + data.error, 'error'); return; }
 
-    const url = data.init_point || data.sandbox_init_point;
+    const url = data.checkout_url || data.sandbox_init_point || data.init_point;
     if (url) {
       window.location.href = url;
     } else {

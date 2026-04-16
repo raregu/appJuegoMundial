@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guía del Jugador · App Mundial 2026</title>
+<style>
+  :root {
+    --bg: #0f1117; --card: #1a1d2e; --border: #2a2d3e;
+    --gold: #f5a623; --gold-glow: rgba(245,166,35,.3);
+    --txt: #e8eaf0; --txt2: #8b8fa8; --green: #22c55e; --blue: #60a5fa;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.6; }
+
+  /* Hero */
+  .hero { background: linear-gradient(135deg, #1a1d2e 0%, #0f1117 100%); border-bottom: 1px solid var(--border); padding: 40px 20px 32px; text-align: center; }
+  .hero .badge { display: inline-block; background: rgba(96,165,250,.15); color: var(--blue); border: 1px solid rgba(96,165,250,.3); border-radius: 20px; padding: 4px 14px; font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 16px; }
+  .hero h1 { font-size: clamp(22px, 5vw, 36px); font-weight: 900; color: var(--gold); text-shadow: 0 0 30px var(--gold-glow); margin-bottom: 8px; }
+  .hero p { color: var(--txt2); font-size: 15px; max-width: 500px; margin: 0 auto 20px; }
+  .back-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--card); border: 1px solid var(--border); color: var(--txt2); text-decoration: none; padding: 8px 16px; border-radius: 8px; font-size: 13px; transition: color .2s; }
+  .back-btn:hover { color: var(--txt); }
+
+  /* Steps */
+  .container { max-width: 720px; margin: 0 auto; padding: 32px 16px 60px; }
+  .section-title { font-size: 11px; font-weight: 700; color: var(--txt2); text-transform: uppercase; letter-spacing: 2px; margin: 40px 0 16px; }
+  .section-title:first-child { margin-top: 0; }
+
+  .step { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 12px; display: flex; gap: 16px; align-items: flex-start; }
+  .step-num { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--gold), #d48a1a); color: #000; font-weight: 900; font-size: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .step-content h3 { font-size: 15px; font-weight: 700; color: var(--txt); margin-bottom: 4px; }
+  .step-content p { font-size: 13px; color: var(--txt2); line-height: 1.6; }
+  .step-content .tip { margin-top: 10px; background: rgba(96,165,250,.08); border-left: 3px solid var(--blue); padding: 8px 12px; border-radius: 0 6px 6px 0; font-size: 12px; color: var(--blue); }
+  .step-content .highlight { background: rgba(245,166,35,.1); border: 1px solid rgba(245,166,35,.2); border-radius: 8px; padding: 8px 12px; margin-top: 10px; font-size: 13px; color: var(--gold); }
+
+  .score-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+  .score-table th { background: rgba(245,166,35,.1); color: var(--gold); padding: 8px 12px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+  .score-table td { padding: 8px 12px; border-top: 1px solid var(--border); color: var(--txt2); }
+  .score-table td:last-child { color: var(--green); font-weight: 700; }
+
+  .faq { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; margin-bottom: 12px; }
+  .faq summary { padding: 16px 20px; font-size: 14px; font-weight: 600; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+  .faq summary::after { content: '›'; font-size: 20px; color: var(--txt2); transition: transform .2s; }
+  .faq[open] summary::after { transform: rotate(90deg); }
+  .faq p { padding: 0 20px 16px; font-size: 13px; color: var(--txt2); line-height: 1.6; }
+
+  .cta { background: linear-gradient(135deg, rgba(245,166,35,.1), rgba(245,166,35,.05)); border: 1px solid rgba(245,166,35,.3); border-radius: 16px; padding: 28px; text-align: center; margin-top: 40px; }
+  .cta h2 { font-size: 20px; font-weight: 900; color: var(--gold); margin-bottom: 8px; }
+  .cta p { color: var(--txt2); font-size: 14px; margin-bottom: 20px; }
+  .cta a { display: inline-block; background: var(--gold); color: #000; font-weight: 800; padding: 12px 28px; border-radius: 10px; text-decoration: none; font-size: 15px; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="badge">👤 Guía del Jugador</div>
+  <h1>⚽ App Mundial 2026</h1>
+  <p>Todo lo que necesitas saber para jugar, pronosticar y ganar</p>
+  <a href="/" class="back-btn">← Volver a la app</a>
+</div>
+
+<div class="container">
+
+  <div class="section-title">📋 Primeros pasos</div>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-content">
+      <h3>Crea tu cuenta</h3>
+      <p>En la pantalla de inicio haz clic en <strong>Registrarse</strong>. Ingresa tu nombre, correo y una contraseña. Recibirás un email de confirmación — revisa el spam si no aparece.</p>
+      <div class="tip">💡 Si ya tienes cuenta, usa <strong>Iniciar Sesión</strong> directamente.</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-content">
+      <h3>Únete al juego con el código</h3>
+      <p>El administrador del juego te comparte un <strong>código de invitación</strong> (ej: <code style="background:rgba(255,255,255,.08);padding:2px 6px;border-radius:4px;">MUNDIAL2026</code>). Ingrésalo en la pantalla de juegos y haz clic en <strong>Unirse</strong>.</p>
+      <div class="highlight">🔑 Si no tienes el código, pídelo al organizador del juego.</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-content">
+      <h3>Hacé tus pronósticos</h3>
+      <p>Dentro del juego verás todos los partidos del Mundial. Para cada partido puedes ingresar el resultado que crees que va a pasar: goles del equipo local y goles del visitante.</p>
+      <div class="tip">⏰ Solo puedes editar tu pronóstico <strong>hasta que empiece el partido</strong>. Después se bloquea.</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-content">
+      <h3>Sigue los resultados</h3>
+      <p>Una vez que termina el partido, el administrador ingresa el resultado real. El sistema calcula automáticamente tus puntos y actualiza el ranking.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">5</div>
+    <div class="step-content">
+      <h3>Mira la tabla de posiciones</h3>
+      <p>En la sección <strong>Tabla</strong> puedes ver en tiempo real el ranking de todos los participantes — quién va primero, cuántos puntos tiene cada uno y cuánto te separa del líder.</p>
+    </div>
+  </div>
+
+  <div class="section-title">🏆 Sistema de puntos</div>
+
+  <div class="step" style="display:block;padding:16px 20px;">
+    <table class="score-table">
+      <tr><th>Resultado</th><th>Puntos</th></tr>
+      <tr><td>⚽ Resultado exacto (ej: pronosticas 2-1 y sale 2-1)</td><td>+3 pts</td></tr>
+      <tr><td>✅ Ganador correcto + diferencia correcta (ej: 3-1 = 2-0)</td><td>+2 pts</td></tr>
+      <tr><td>✅ Solo ganador correcto (ej: pronosticas 1-0, sale 2-0)</td><td>+1 pt</td></tr>
+      <tr><td>❌ Resultado incorrecto</td><td>0 pts</td></tr>
+    </table>
+    <div class="tip" style="margin-top:12px;">💎 Los partidos de fase final (cuartos, semis, final) pueden valer el doble. Consulta con el organizador.</div>
+  </div>
+
+  <div class="section-title">🔔 Notificaciones</div>
+
+  <div class="step">
+    <div class="step-num">🔔</div>
+    <div class="step-content">
+      <h3>Activa las notificaciones push</h3>
+      <p>La app te avisa automáticamente <strong>1 hora antes</strong> de cada partido para que no olvides ingresar tu pronóstico. Cuando se te pida permiso en el navegador, haz clic en <strong>Permitir</strong>.</p>
+      <div class="tip">📱 Funciona mejor si abres la app desde Chrome en tu celular y la agregas a la pantalla de inicio.</div>
+    </div>
+  </div>
+
+  <div class="section-title">❓ Preguntas frecuentes</div>
+
+  <details class="faq">
+    <summary>¿Puedo cambiar mi pronóstico?</summary>
+    <p>Sí, puedes editarlo cuantas veces quieras mientras el partido no haya comenzado. Una vez que empieza, el pronóstico se bloquea automáticamente.</p>
+  </details>
+
+  <details class="faq">
+    <summary>¿Qué pasa si no ingreso pronóstico para un partido?</summary>
+    <p>Si no ingresas pronóstico antes de que empiece el partido, quedas con 0 puntos en ese partido. Te recomendamos ingresar algo aunque sea una aproximación.</p>
+  </details>
+
+  <details class="faq">
+    <summary>¿Puedo estar en más de un juego?</summary>
+    <p>Sí, puedes unirte a múltiples juegos con distintos códigos. Por ejemplo, un juego con el trabajo y otro con amigos. Cada juego tiene su propio ranking.</p>
+  </details>
+
+  <details class="faq">
+    <summary>¿Puedo ver los pronósticos de los demás?</summary>
+    <p>Depende de la configuración del administrador. Generalmente los pronósticos de otros jugadores se revelan una vez que el partido comenzó.</p>
+  </details>
+
+  <details class="faq">
+    <summary>No me llegó el email de confirmación</summary>
+    <p>Revisa la carpeta de <strong>spam o correo no deseado</strong>. Si usas correo corporativo, puede que el filtro de tu empresa lo bloquee — pídele al área de IT que permita correos de appmundial2026.com.</p>
+  </details>
+
+  <div class="cta">
+    <h2>¡Ya sabes todo! ⚽</h2>
+    <p>Entra a la app, únete al juego y empieza a pronosticar.</p>
+    <a href="/">Ir a la app →</a>
+  </div>
+
+</div>
+</body>
+</html>
